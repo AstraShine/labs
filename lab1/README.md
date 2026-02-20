@@ -1,7 +1,6 @@
 <div style="font-family: Times New Roman; font-size: 14pt; line-height: 1.5;">
 
 <div style="text-align: center">
-<p text-align: center>fhshsh</p>
 
 **МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ ВЫСШЕГО ОБРАЗОВАНИЯ**
 **"САХАЛИНСКИЙ ГОСУДАРСТВЕННЫЙ УНИВЕРСИТЕТ»**
@@ -44,12 +43,12 @@
 <br><br>
 
 ### Структура проекта
-![My Image](images/structure.jpg)
+![My Image](lab1/images/structure.jpg)
 
 <br><br>
 
 ### Скриншот работающего приложения на устройстве
-![My Image](images/phone.jpg)
+![My Image](lab1/images/phone.jpg)
 
 <br><br>
 
