@@ -43,12 +43,12 @@
 <br><br>
 
 ### Структура проекта
-![My Image](lab1/images/structure.jpg)
+![My Image](images/structure.jpg)
 
 <br><br>
 
 ### Скриншот работающего приложения на устройстве
-![My Image](lab1/images/phone.jpg)
+![My Image](images/phone.jpg)
 
 <br><br>
 
