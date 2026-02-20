@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Корневой элемент ConstraintLayout — контейнер, позволяющий гибко размещать дочерние элементы с помощью ограничений (constraints).-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <!--Пространства имён (xmlns):
+    android — стандартные атрибуты Android
+    app — атрибуты из библиотек поддержки (в т. ч. ConstraintLayout)
+    tools — атрибуты для работы в среде разработки (не влияют на работу приложения).
+    Атрибуты контейнера:
+    android:id — уникальный идентификатор макета
+    android:layout_width и android:layout_height — размеры на весь экран (match_parent)
+    tools:context — связывает макет с активностью MainActivity.-->
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/greeting"
+        android:textSize="24sp"
+        android:textColor="#3399FF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+    <!--Элементы TextView:
+    android:text — текст берётся из строковых ресурсов (strings.xml)
+    android:textSize — размер текста в масштабируемых пикселях (sp)
+    android:textColor — цвет текста в формате RGB
+    android:layout_marginTop — отступ сверху для второго TextView
+    app:layout_constraint* — ограничения для позиционирования относительно родителя или других элементов.-->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/stringTwo"
+        android:layout_marginTop="48dp"
+        android:textSize="24sp"
+        android:textColor="#0000FF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
