@@ -1,4 +1,6 @@
-<div style="text-align: center; font-family: Times New Roman; font-size: 14pt; line-height: 1.5;">
+<div style="font-family: Times New Roman; font-size: 14pt; line-height: 1.5;">
+
+<div style="text-align: center;">
 
 **МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ**
 
@@ -142,3 +144,4 @@
 **Вывод по работе:**
 
 Было проведено краткое знакомство со средой разработки Android Studio, изучены структура проекта и базовые элементы интерфейса. Было создано и запущено на устройстве простое приложение.
+ </div>
