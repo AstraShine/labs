@@ -208,7 +208,7 @@ class MainActivity : AppCompatActivity() {
 <br><br>
 
 ### Скриншот приложения с отображением результатов
-![My Image](images/screen.jpg)
+![My Image](Images/screen.jpg)
 
 <br><br>
 
