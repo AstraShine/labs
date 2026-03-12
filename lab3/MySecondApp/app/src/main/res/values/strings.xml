@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">MySecondApp</string>
+    <string name="original">Исходные товары:</string>
+    <string name="availability">Товары в наличии:</string>
+    <string name="sort">Товары после сортировки по цене (название и цена):</string>
+    <string name="newlist">Товары девешле 2000:</string>
+
+    <!--Индивидуальное задание-->
+    <string name="salary">Сотрудники с зарплатой больше 100 000:</string>
+    <string name="experience">Сортировка по стажу:</string>
+    <string name="name">Имена и отделы:</string>
+</resources>

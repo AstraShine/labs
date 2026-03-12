@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/original"
+        android:textStyle="bold"
+        android:textColor="#0000ff"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/textOriginal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/availability"
+        android:textStyle="bold"
+        android:textColor="#0000ff"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/textInStock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sort"
+        android:textStyle="bold"
+        android:textColor="#0000ff"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/textSorted"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/newlist"
+        android:textStyle="bold"
+        android:textColor="#0000ff"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/textPrice"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <!--Индивидуальное задание-->
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/salary"
+        android:textStyle="bold"
+        android:textColor="#0000ff"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/textSalary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/experience"
+        android:textStyle="bold"
+        android:textColor="#0000ff"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/textExperience"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/name"
+        android:textStyle="bold"
+        android:textColor="#0000ff"
+        android:textSize="14sp"/>
+
+    <TextView
+        android:id="@+id/textName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+
+</LinearLayout>
