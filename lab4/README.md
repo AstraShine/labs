@@ -41,221 +41,289 @@
 <br><br>
 
 
-## Листинг файла `Product.kt`
+## Листинг файла `activity_main.xml`
 
 ```kotlin
-// Пакет, в котором находится класс Product
-package com.example.mysecondapp.models
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Объявление XML-документа с указанием версии и кодировки -->
 
-// Data class — специальный тип класса в Kotlin для хранения данных
-data class Product(
-    // Название товара, тип String (строка)
-    val name: String,
-    
-    // Категория товара, тип String
-    val category: String,
-    
-    // Цена товара, тип Double (число с плавающей точкой)
-    val price: Double,
-    
-    // Признак наличия на складе, тип Boolean (true / false)
-    val inStock: Boolean
-)
+<!-- Корневой контейнер — ConstraintLayout, обеспечивающий гибкое позиционирование элементов через привязки -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"  <!-- Ширина контейнера занимает всю доступную ширину родителя -->
+    android:layout_height="match_parent" <!-- Высота контейнера занимает всю доступную высоту родителя -->
+    android:background="@color/gray_light" <!-- Фон контейнера — светло‑серый цвет -->
+    tools:context=".MainActivity"> <!-- Указывает, что этот layout связан с MainActivity -->
+
+    <!-- Аватар пользователя -->
+    <ImageView
+        android:id="@+id/imageAvatar" <!-- Уникальный идентификатор элемента -->
+        android:layout_width="@dimen/avatar_size" <!-- Ширина задаётся через ресурс dimen -->
+        android:layout_height="@dimen/avatar_size" <!-- Высота задаётся через ресурс dimen -->
+        android:src="@drawable/ic_profile" <!-- Изображение для отображения -->
+        app:layout_constraintTop_toTopOf="parent" <!-- Привязка к верхнему краю родителя -->
+        app:layout_constraintBottom_toTopOf="@+id/textName" <!-- Привязка нижнего края к верху TextView с именем -->
+        app:layout_constraintLeft_toLeftOf="parent" <!-- Привязка левого края к левому краю родителя -->
+        app:layout_constraintRight_toRightOf="parent" <!-- Привязка правого края к правому краю родителя -->
+        android:layout_marginTop="@dimen/margin_normal" <!-- Отступ сверху -->
+        android:contentDescription="@string/profile_name" /> <!-- Описание для доступности -->
+
+    <!-- Имя пользователя -->
+    <TextView
+        android:id="@+id/textName" <!-- Уникальный идентификатор элемента -->
+        android:layout_width="wrap_content" <!-- Ширина подстраивается под содержимое -->
+        android:layout_height="wrap_content" <!-- Высота подстраивается под содержимое -->
+        android:text="@string/profile_name" <!-- Текст задаётся через строковый ресурс -->
+        android:textSize="@dimen/text_size_name" <!-- Размер текста задаётся через ресурс dimen -->
+        android:textColor="@color/black" <!-- Цвет текста — чёрный -->
+        android:textStyle="bold" <!-- Жирное начертание текста -->
+        app:layout_constraintTop_toBottomOf="@id/imageAvatar" <!-- Привязка к низу ImageView с аватаром -->
+        app:layout_constraintLeft_toLeftOf="parent" <!-- Привязка левого края к левому краю родителя -->
+        app:layout_constraintRight_toRightOf="parent" <!-- Привязка правого края к правому краю родителя -->
+        android:layout_marginTop="@dimen/margin_small" /> <!-- Небольшой отступ сверху -->
+
+    <!-- Статус пользователя -->
+    <TextView
+        android:id="@+id/textStatus" <!-- Уникальный идентификатор элемента -->
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/profile_status" <!-- Текст статуса из строкового ресурса -->
+        android:textSize="@dimen/text_size_status" <!-- Размер текста статуса -->
+        android:textColor="@color/orange" <!-- Цвет текста — оранжевый -->
+        app:layout_constraintTop_toBottomOf="@id/textName" <!-- Привязка к низу TextView с именем -->
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="@dimen/margin_small" />
+
+    <!-- Контейнер для контактной информации (телефон и email) -->
+    <LinearLayout
+        android:id="@+id/LinearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp" <!-- Фиксированная высота контейнера -->
+        android:orientation="horizontal" <!-- Горизонтальное расположение дочерних элементов -->
+        android:paddingLeft="16dp" <!-- Отступы слева -->
+        android:paddingRight="16dp" <!-- Отступы справа -->
+        app:layout_constraintHorizontal_bias="0.5" <!-- Центрирование по горизонтали -->
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/textStatus"> <!-- Привязка к низу TextView со статусом -->
+
+        <!-- Номер телефона -->
+        <TextView
+            android:id="@+id/textPhone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_small"
+            android:layout_marginStart="@dimen/margin_normal"
+            android:text="@string/profile_phone" <!-- Текст телефона из строкового ресурса -->
+            android:textColor="@color/blue_light_2" <!-- Цвет текста — светло‑синий -->
+            android:textSize="@dimen/text_size_status"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"/>
+
+        <!-- Email пользователя -->
+        <TextView
+            android:id="@+id/textEmail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_small"
+            android:layout_marginStart="@dimen/margin_normal"
+            android:text="@string/profile_email" <!-- Текст email из строкового ресурса -->
+            android:textColor="@color/blue_light_2"
+            android:textSize="@dimen/text_size_status"
+            app:layout_constraintLeft_toLeftOf="@+id/textPhone" <!-- Привязка к левому краю TextView с телефоном -->
+            app:layout_constraintRight_toRightOf="parent"/>
+    </LinearLayout>
+
+    <!-- Кнопка «Редактировать» -->
+    <Button
+        android:id="@+id/buttonEdit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_edit" <!-- Текст кнопки из строкового ресурса -->
+        android:backgroundTint="@color/blue_light" <!-- Цвет фона кнопки — светло‑синий -->
+        app:cornerRadius="@dimen/button_corner_radius" <!-- Радиус скругления углов кнопки -->
+        app:layout_constraintTop_toBottomOf="@+id/LinearLayout" <!-- Привязка к низу LinearLayout с контактами -->
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="@dimen/margin_normal"/> <!-- Отступ сверху -->
+
+    <!-- Кнопка «Выйти» -->
+    <Button
+        android:id="@+id/buttonExit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_exit" <!-- Текст кнопки из строкового ресурса -->
+        android:backgroundTint="@color/blue_light"
+        app:cornerRadius="@dimen/button_corner_radius"
+        app:layout_constraintTop_toBottomOf="@id/buttonEdit" <!-- Привязка к низу кнопки «Редактировать» -->
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginTop="@dimen/margin_normal"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
 ```
 
 <br><br>
 
-## Листинг файла `Employee.kt`
+## Листинг файла `Main.Activity.kt`
 
 ```kotlin
-// Пакет, в котором находится класс Employee
-package com.example.mysecondapp.models
+package com.example.profileapp
+// Объявление пакета приложения — определяет пространство имён для класса MainActivity
 
-// Data class — специальный тип класса в Kotlin для хранения данных
-data class Employee(
-    // Имя сотрудника, тип String (строка)
-    val name: String,
-    
-    // Отдел, в котором работает сотрудник, тип String
-    val department: String,
-    
-    // Зарплата сотрудника, тип Doubl
-    val salary: Double,
-    
-    // Опыт работы сотрудника в годах, тип Double
-    val experience: Double
-)
-
-```
-
-<br><br>
-
-## Листинг файла `MainActivity.kt`
-
-```kotlin
-// Пакет, в котором находится MainActivity
-package com.example.mysecondapp
-
-// Импорты необходимых классов и компонентов Android
-import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-// Импорт моделей данных
-import com.example.mysecondapp.models.Product
-import com.example.mysecondapp.models.Employee
-// Импорт виджетов для отображения данных
+import android.os.Bundle
+import android.widget.Button
+import android.widget.Toast
+import kotlin.system.exitProcess
+import androidx.core.content.ContextCompat
 import android.widget.TextView
+// Импорты необходимых классов и функций:
+// - AppCompatActivity — базовый класс для активности с поддержкой обратной совместимости
+// - Bundle — используется для сохранения и восстановления состояния активности
+// - Button, TextView — виджеты интерфейса
+// - Toast — класс для отображения коротких всплывающих сообщений
+// - exitProcess — функция для завершения процесса приложения
+// - ContextCompat — утилита для безопасного получения ресурсов (например, Drawable)
 
-// Основной класс активности приложения, наследуется от AppCompatActivity
 class MainActivity : AppCompatActivity() {
-    // Переопределённый метод жизненного цикла — вызывается при создании активности
+    // Объявление класса MainActivity, наследующего от AppCompatActivity
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Переопределение метода onCreate — точка входа в активность
+        // Вызывается при создании активности, здесь выполняется основная инициализация
+
         super.onCreate(savedInstanceState)
-        // Устанавливаем UI из layout‑файла
+        // Вызов реализации onCreate родительского класса — обязательный шаг
+
         setContentView(R.layout.activity_main)
+        // Установка UI-макета (activity_main.xml) в качестве содержимого активности
 
-        // Получаем список товаров
-        val products = getProducts()
+        // Иконки для TextView
+        val textPhone = findViewById<TextView>(R.id.textPhone)
+        // Находим TextView с ID textPhone в макете
+        val ic_phone = ContextCompat.getDrawable(this, R.drawable.ic_call)
+        // Получаем Drawable-ресурс иконки телефона (ic_call) с учётом контекста активности
+        textPhone.setCompoundDrawablesWithIntrinsicBounds(ic_phone, null, null, null)
+        // Устанавливаем иконку слева от текста в TextView (остальные позиции — null)
 
-        // 1. Отображение исходного списка товаров
-        // Преобразуем список в строку для отображения в TextView
-        val originalText = products.joinToString("\n") {
-            "${it.name} – ${it.price} руб. (${if (it.inStock) "в наличии" else "нет"})"
+        val textEmail = findViewById<TextView>(R.id.textEmail)
+        // Находим TextView с ID textEmail в макете
+        val ic_email = ContextCompat.getDrawable(this, R.drawable.ic_email)
+        // Получаем Drawable-ресурс иконки email (ic_email)
+        textEmail.setCompoundDrawablesWithIntrinsicBounds(ic_email, null, null, null)
+        // Устанавливаем иконку слева от текста в TextView
+
+        val buttonEdit = findViewById<Button>(R.id.buttonEdit)
+        // Находим кнопку «Редактировать» (buttonEdit) в макете
+        buttonEdit.setOnClickListener {
+            // Устанавливаем обработчик нажатия на кнопку
+            Toast.makeText(this, R.string.toast_message, Toast.LENGTH_SHORT).show()
+            // При нажатии показываем короткое всплывающее сообщение (Toast) с текстом из строкового ресурса
         }
-        findViewById<TextView>(R.id.textOriginal).text = originalText
 
-        // 2. Фильтрация: отображаем только товары, которые есть в наличии
-        val inStockProducts = products.filter { it.inStock }
-        val inStockText = inStockProducts.joinToString("\n") {
-            "${it.name} – ${it.price} руб."
+        val buttonExit = findViewById<Button>(R.id.buttonExit)
+        // Находим кнопку «Выйти» (buttonExit) в макете
+        buttonExit.setOnClickListener {
+            // Устанавливаем обработчик нажатия на кнопку
+
+            // Закрывает основную активность
+            this().finish()
+
+            // Закрывает приложение
+            exitProcess(0)
         }
-        findViewById<TextView>(R.id.textInStock).text = inStockText
-
-        // 3. Цепочка операций:
-        // - фильтруем товары категории «Электроника», которые есть в наличии;
-        // - сортируем по цене (по возрастанию);
-        // - преобразуем в список строк с названием и ценой.
-        val electronicsSorted = products
-            .filter { it.category == "Электроника" && it.inStock }
-            .sortedBy { it.price }
-            .map { "${it.name} – ${it.price} руб." }
-        val electronicsText = electronicsSorted.joinToString("\n")
-        findViewById<TextView>(R.id.textSorted).text = electronicsText
-
-        // 4. Цепочка операций:
-        // - фильтруем товары с ценой меньше 2000 руб.;
-        // - сортируем по названию (алфавитно);
-        // - преобразуем в строки с названием, ценой и статусом наличия.
-        val priceSorted = products
-            .filter { it.price < 2000 }
-            .sortedBy { it.name }
-            .map { "${it.name} – ${it.price} руб. (${if (it.inStock) "в наличии" else "нет"})" }
-        val priceText = priceSorted.joinToString("\n")
-        findViewById<TextView>(R.id.textPrice).text = priceText
-
-        // Индивидуальное задание: работа с сотрудниками
-        val employees = getEmployees()
-
-        // Фильтрация: сотрудники с зарплатой больше 100 000 руб.
-        val SalaryMore = employees.filter { it.salary > 100000 }
-        val SalaryMoreText = SalaryMore.joinToString("\n") {
-            "${it.name}, ${it.department}. Зарплата: ${it.salary} руб. Стаж работы: ${it.experience}"
-        }
-        findViewById<TextView>(R.id.textSalary).text = SalaryMoreText
-
-        // Сортировка: сотрудники по убыванию стажа работы
-        val Experience = employees.sortedByDescending { it.experience }
-        val ExperienceText = Experience.joinToString("\n") {
-            "${it.name}, стаж работы: ${it.experience}"
-        }
-        findViewById<TextView>(R.id.textExperience).text = ExperienceText
-
-        // Преобразование: список строк «имя — отдел» для всех сотрудников
-        val Names = employees.map { "${it.name} – ${it.department}" }
-        val NamesText = Names.joinToString("\n")
-        findViewById<TextView>(R.id.textName).text = NamesText
-    }
-
-    // Вспомогательный метод для получения тестового списка товаров
-    private fun getProducts(): List<Product> {
-        return listOf(
-            Product("Ноутбук", "Электроника", 75000.0, true),
-            Product("Мышь", "Электроника", 1500.0, true),
-            Product("Книга 'Котлин'", "Книги", 1200.0, false),
-            Product("Флешка 64GB", "Электроника", 2000.0, true),
-            Product("Блокнот", "Канцелярия", 300.0, true),
-            Product("Ручка", "Канцелярия", 50.0, false),
-            Product("Монитор", "Электроника", 25000.0, true)
-        )
-    }
-
-    // Вспомогательный метод для получения тестового списка сотрудников
-    private fun getEmployees(): List<Employee> {
-        return listOf(
-            Employee("Андреев А. А.", "Отдел продаж", 90000.0, 5.0),
-            Employee("Борисов Б. Б.", "Отдел поставок", 120000.0, 10.0),
-            Employee("Владимиров В. В.", "Отдел разработки", 110000.0, 8.0),
-            Employee("Григорьев Г. Г.", "Отдел маркетинка", 8000.0, 3.0),
-            Employee("Дмитриев Д. Д.", "Отдел поставок", 85000.0, 5.0)
-        )
     }
 }
-
 ```
 
 <br><br>
 
 ### Скриншот приложения с отображением результатов
-![My Image](Images/Screen.jpg)
+![My Image](images/Screen.jpg)
 
 <br><br>
 
 ### Ответы на контрольные вопросы:
 
-**1. Что возвращает функция `filter` — новый список или изменяет существующий?**
+**1. Для чего используется ConstraintLayout? Какие у него преимущества перед LinearLayout?**
 
-Функция `filter` возвращает новый список, не изменяя исходный. Она перебирает элементы коллекции и включает в новый список только те, которые удовлетворяют заданному условию (предикату).
+ConstraintLayout — это гибкий менеджер компоновки, который позволяет создавать сложные и плоские иерархии представлений. Основные преимущества перед LinearLayout:
 
-**2. В чём разница между `sortedBy` и `sortedByDescending`?**
+- **Гибкое позиционирование** — элементы можно привязывать друг к другу, к родителю, к направляющим (guidelines) в любых комбинациях
+- **Плоская иерархия** — позволяет создавать сложные интерфейсы без вложенных layout'ов, что повышает производительность
+- **Процентное позиционирование** — можно размещать элементы на определённом проценте от родителя (например, на 30% высоты экрана)
+- **Цепочки (chains)** — возможность создавать группы элементов с равномерным распределением пространства
+- **Адаптивность** — легче создавать интерфейсы, которые хорошо выглядят на разных размерах экранов
 
-Обе функции возвращают новый отсортированный список, но:
+**2. Что такое app:layout_constraint... атрибуты?**
 
-- `sortedBy` сортирует элементы по возрастанию на основе заданного критерия.
-- `sortedByDescending` сортирует элементы по убыванию на основе того же критерия.
+Это атрибуты, определяющие привязки (constraints) элемента внутри ConstraintLayout. Они задают, к какой стороне другого элемента или родителя привязана текущая сторона:
 
-**3. Как можно объединить несколько условий в `filter`?**
+- `app:layout_constraintLeft_toLeftOf` — левая сторона элемента привязана к левой стороне другого элемента
+- `app:layout_constraintRight_toRightOf` — правая сторона привязана к правой стороне
+- `app:layout_constraintTop_toBottomOf` — верхняя сторона привязана к нижней стороне другого элемента
+- `app:layout_constraintBottom_toTopOf` — нижняя сторона привязана к верхней стороне
+- `app:layout_constraintGuide_percent` — для Guideline задаёт процентное расположение
 
-Несколько условий объединяются внутри лямбда‑выражения с помощью логических операторов:
+**3. Как вынести размеры и цвета в ресурсы? Зачем это нужно?**
 
-- `&&` — логическое И (должны выполняться все условия);
-- `||` — логическое ИЛИ (должно выполняться хотя бы одно условие).
-
-**4. Для чего используется функция `map`? Приведите пример**
-
-Функция `map` преобразует каждый элемент коллекции по заданному правилу и возвращает новый список с результатами преобразования. Она «проецирует» один тип данных на другой.
-
-**Пример:**
-
-```kotlin
-val numbers = listOf(1, 2, 3, 4)
-val newNumbers = numbers.map { it + 2 } // каждое число увеличиваем на двойку
-println(newNumbers) // [3, 4, 5, 6]
+Размеры выносятся в файл `res/values/dimens.xml`:
+```xml
+<dimen name="text_size_name">24sp</dimen>
+```
+Цвета выносятся в файл `res/values/colors.xml`:
+```xml
+<color name="fraise">#FF99D3</color>
+```
+Используются в layout так:
+```xml
+android:textSize="@dimen/text_size_name"
+android:textColor="@color/fraise"
 ```
 
-**5. Что такое `joinToString` и как она работает?**
+**Зачем это нужно:**
+- **Единообразие дизайна** — все размеры и цвета в одном месте
+- **Лёгкость поддержки** — изменение одного значения в ресурсах обновит его во всём приложении
+- **Адаптация под разные устройства** — можно создавать альтернативные ресурсы для разных экранов
+- **Локализация** — строки можно переводить на другие языки
 
-`joinToString` — функция, которая преобразует коллекцию в одну строку, объединяя её элементы. Она полезна для вывода данных в удобочитаемом формате.
+**4. Каким образом можно обработать клик на кнопке в Kotlin-коде?**
 
-**Основные параметры:**
+Самый распространённый способ — установка слушателя через `setOnClickListener`:
 
-- `separator` — разделитель между элементами (по умолчанию — `", "`);
-- `prefix` — текст перед началом строки (по умолчанию — пустая строка);
-- `postfix` — текст после окончания строки (по умолчанию — пустая строка);
-- `limit` — максимальное количество элементов для включения (если элементов больше, добавляется `truncated`);
-- `truncated` — строка, добавляемая, если количество элементов превышает `limit` (по умолчанию — `"..."`);
-- `transform` — функция для преобразования каждого элемента перед объединением.
+```kotlin
+val button = findViewById<Button>(R.id.buttonEdit)
+button.setOnClickListener {
+    // Действия при нажатии
+    Toast.makeText(this, "Кнопка нажата", Toast.LENGTH_SHORT).show()
+}
+```
 
+Альтернативные способы:
+- Реализация интерфейса `View.OnClickListener` в Activity
+- Использование лямбда-выражений (как в примере выше)
+- Атрибут `android:onClick` в XML (менее гибкий способ)
 
-**Вывод:** Изучила функциональные методы обработки коллекций в Kotlin (filter, map, sortedBy) на примере списка объектов и вывела результаты в интерфейс Android-приложения.
+**5. Как добавить обработчик нажатия на ImageView?**
+
+ImageView обрабатывает нажатия так же, как и кнопка, но нужно явно указать, что он кликабельный:
+
+```kotlin
+val imageView = findViewById<ImageView>(R.id.imageAvatar)
+imageView.isClickable = true  // или в XML android:clickable="true"
+imageView.setOnClickListener {
+    Toast.makeText(this, "Аватар нажат", Toast.LENGTH_SHORT).show()
+}
+```
+
+В XML можно добавить:
+```xml
+android:clickable="true"
+android:focusable="true"
+```
+
+**Вывод:** Освоила создание пользовательского интерфейса в Android с использованием ConstraintLayout, изучила основные компоненты: ImageView, TextView, Button. Научилась работать с ресурсами (строки, цвета, размеры) и обрабатывать нажатия кнопок.
