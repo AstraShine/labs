@@ -249,81 +249,214 @@ class MainActivity : AppCompatActivity() {
 
 ### Ответы на контрольные вопросы:
 
-**1. Для чего используется ConstraintLayout? Какие у него преимущества перед LinearLayout?**
+## 1. ConstraintLayout: назначение и преимущества перед LinearLayout**
 
-ConstraintLayout — это гибкий менеджер компоновки, который позволяет создавать сложные и плоские иерархии представлений. Основные преимущества перед LinearLayout:
+**ConstraintLayout** — контейнер для размещения элементов интерфейса в Android‑приложениях. Позволяет гибко позиционировать и связывать виджеты относительно друг друга или родительского контейнера.
 
-- **Гибкое позиционирование** — элементы можно привязывать друг к другу, к родителю, к направляющим (guidelines) в любых комбинациях
-- **Плоская иерархия** — позволяет создавать сложные интерфейсы без вложенных layout'ов, что повышает производительность
-- **Процентное позиционирование** — можно размещать элементы на определённом проценте от родителя (например, на 30% высоты экрана)
-- **Цепочки (chains)** — возможность создавать группы элементов с равномерным распределением пространства
-- **Адаптивность** — легче создавать интерфейсы, которые хорошо выглядят на разных размерах экранов
+**Преимущества перед LinearLayout**
 
-**2. Что такое app:layout_constraint... атрибуты?**
+* **Гибкость позиционирования.** В `ConstraintLayout` элементы можно привязывать к любым сторонам других элементов или границ контейнера. В `LinearLayout` элементы располагаются только последовательно (горизонтально/вертикально).
+* **Снижение вложенности.** Позволяет избежать глубоких иерархий контейнеров — это улучшает производительность. `LinearLayout` часто требует вложенных контейнеров для сложных макетов.
+* **Адаптивность.** Лучше адаптируется к разным размерам экранов и ориентациям без необходимости создавать отдельные XML‑файлы.
+* **Оптимизация производительности.** За счёт плоской иерархии виджетов рендеринг происходит быстрее по сравнению с глубоко вложенными `LinearLayout`.
+* **Поддержка цепочек (Chains).** Позволяет равномерно распределять элементы по горизонтали или вертикали с гибким управлением отступами.
+* **Базовые линии (Baseline alignment).** Можно выравнивать текст в разных элементах по базовой линии.
 
-Это атрибуты, определяющие привязки (constraints) элемента внутри ConstraintLayout. Они задают, к какой стороне другого элемента или родителя привязана текущая сторона:
+## 2. Атрибуты app:layout_constraint...
 
-- `app:layout_constraintLeft_toLeftOf` — левая сторона элемента привязана к левой стороне другого элемента
-- `app:layout_constraintRight_toRightOf` — правая сторона привязана к правой стороне
-- `app:layout_constraintTop_toBottomOf` — верхняя сторона привязана к нижней стороне другого элемента
-- `app:layout_constraintBottom_toTopOf` — нижняя сторона привязана к верхней стороне
-- `app:layout_constraintGuide_percent` — для Guideline задаёт процентное расположение
+Атрибуты с префиксом `app:layout_constraint` используются в `ConstraintLayout` для определения связей (ограничений) между элементами. Они задают, как виджет должен быть позиционирован относительно других виджетов или границ контейнера.
 
-**3. Как вынести размеры и цвета в ресурсы? Зачем это нужно?**
+**Основные атрибуты**
 
-Размеры выносятся в файл `res/values/dimens.xml`:
+* `app:layout_constraintLeft_toLeftOf` — левая сторона элемента привязывается к левой стороне указанного элемента.
+* `app:layout_constraintLeft_toRightOf` — левая сторона элемента привязывается к правой стороне указанного элемента.
+* Аналогичные атрибуты для других сторон:
+  * `...Right_toLeftOf`
+  * `...Right_toRightOf`
+  * `...Top_toTopOf`
+  * `...Top_toBottomOf`
+  * `...Bottom_toTopOf`
+  * `...Bottom_toBottomOf`
+* `app:layout_constraintStart_toStartOf` / `app:layout_constraintEnd_toEndOf` — привязки для языков с направлением письма справа налево (RTL).
+* `app:layout_constraintTop_bias` — смещение элемента вдоль горизонтальной/вертикальной оси (значение от $0$ до $1$).
+* `app:layout_constraintWidth_percent` / `app:layout_constraintHeight_percent` — установка размера элемента в процентах от доступного пространства.
+
+## 3. Вынесение размеров и цветов в ресурсы
+
+**Цвета**
+
+1. Создайте или откройте файл `res/values/colors.xml`.
+2. Добавьте цветовые ресурсы с уникальными именами:
+
 ```xml
-<dimen name="text_size_name">24sp</dimen>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary_color">#3F51B5</color>
+    <color name="accent_color">#FF4081</color>
+    <color name="background_white">#FFFFFF</color>
+    <color name="text_dark">#333333</color>
+</resources>
 ```
-Цвета выносятся в файл `res/values/colors.xml`:
+3. Используйте в разметке через ссылку `@color/имя_ресурса`:
+```kotlin
+android:background="@color/primary_color"
+android:textColor="@color/text_dark"
+```
+**Размеры**
+1. Создайте или откройте файл `res/values/dimens.xml`.
+2. Определите размеры с понятными именами:
 ```xml
-<color name="fraise">#FF99D3</color>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="text_size_large">24sp</dimen>
+    <dimen name="text_size_medium">16sp</dimen>
+    <dimen name="margin_small">8dp</dimen>
+    <dimen name="margin_medium">16dp</dimen>
+    <dimen name="margin_large">32dp</dimen>
+    <dimen name="button_height">48dp</dimen>
+</resources>
 ```
-Используются в layout так:
-```xml
-android:textSize="@dimen/text_size_name"
-android:textColor="@color/fraise"
+3. Применяйте в разметке через `@dimen/имя_ресурса`:
+```kotlin
+android:textSize="@dimen/text_size_medium"
+android:layout_margin="@dimen/margin_medium"
+android:layout_height="@dimen/button_height"
 ```
 
-**Зачем это нужно:**
-- **Единообразие дизайна** — все размеры и цвета в одном месте
-- **Лёгкость поддержки** — изменение одного значения в ресурсах обновит его во всём приложении
-- **Адаптация под разные устройства** — можно создавать альтернативные ресурсы для разных экранов
-- **Локализация** — строки можно переводить на другие языки
+**Зачем выносить в ресурсы?**
+- **Централизованное управление.** Все значения в одном месте — легко менять и поддерживать.
+- **Повторное использование.** Один ресурс можно применять в разных частях приложения.
+- **Адаптивность.** Можно создавать разные файлы ресурсов для: разных размеров экранов (values-sw600dp/ для планшетов); разных ориентаций (values-land/); разных плотностей пикселей (drawable-hdpi/, drawable-xhdpi/ и т. д.).
+- **Соблюдение единого стиля.** Гарантирует единообразие цветов и размеров во всём приложении.
+- **Упрощение локализации.** Облегчает поддержку разных языков и региональных настроек.
+- **Лёгкое обновление дизайна.** Изменение одного значения в ресурсах автоматически применяется везде.
 
-**4. Каким образом можно обработать клик на кнопке в Kotlin-коде?**
+## 4. Обработка клика на кнопке в Kotlin‑коде
 
-Самый распространённый способ — установка слушателя через `setOnClickListener`:
+Существует несколько способов обработки клика на кнопке в Android‑приложениях на Kotlin. Ниже — основные варианты.
+**Способ 1: `setOnClickListener` с лямбда‑выражением (рекомендуемый)**
+Самый простой и лаконичный способ для обработки клика одной кнопки.
 
 ```kotlin
-val button = findViewById<Button>(R.id.buttonEdit)
+val button: Button = findViewById(R.id.my_button)
 button.setOnClickListener {
-    // Действия при нажатии
-    Toast.makeText(this, "Кнопка нажата", Toast.LENGTH_SHORT).show()
+    Toast.makeText(this, "Кнопка нажата!", Toast.LENGTH_SHORT).show()
+    // Здесь можно добавить любую другую логику
 }
 ```
-
-Альтернативные способы:
-- Реализация интерфейса `View.OnClickListener` в Activity
-- Использование лямбда-выражений (как в примере выше)
-- Атрибут `android:onClick` в XML (менее гибкий способ)
-
-**5. Как добавить обработчик нажатия на ImageView?**
-
-ImageView обрабатывает нажатия так же, как и кнопка, но нужно явно указать, что он кликабельный:
-
+**Преимущества:**
+- минимум кода;
+- интуитивно понятный синтаксис;
+- подходит для простых сценариев.
+**Способ 2: Реализация интерфейса View.OnClickListener**
+Подходит, когда нужно обрабатывать клики нескольких элементов в одном активити или фрагменте.
 ```kotlin
-val imageView = findViewById<ImageView>(R.id.imageAvatar)
-imageView.isClickable = true  // или в XML android:clickable="true"
-imageView.setOnClickListener {
-    Toast.makeText(this, "Аватар нажат", Toast.LENGTH_SHORT).show()
+class MainActivity : AppCompatActivity(), View.OnClickListener {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        // Назначаем обработчик для кнопок
+        findViewById<Button>(R.id.button1).setOnClickListener(this)
+        findViewById<Button>(R.id.button2).setOnClickListener(this)
+    }
+
+    override fun onClick(v: View?) {
+        when (v?.id) {
+            R.id.button1 -> {
+                Toast.makeText(this, "Нажата кнопка 1", Toast.LENGTH_SHORT).show()
+            }
+            R.id.button2 -> {
+                Toast.makeText(this, "Нажата кнопка 2", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 }
 ```
+**Преимущества:**
+- централизованная обработка кликов;
+- удобно, если много кнопок в одном месте;
+- легко добавлять новые обработчики.
+**Способ 3: Лямбда‑выражение с явной проверкой ID**
+Используется, когда нужно обработать клик и проверить ID элемента внутри лямбды.
+```kotlin
+findViewById<Button>(R.id.my_button).setOnClickListener { clickedView ->
+    when (clickedView.id) {
+        R.id.my_button -> {
+            Toast.makeText(this, "Основная кнопка нажата", Toast.LENGTH_SHORT).show()
+        }
+        // Можно добавить другие условия
+    }
+}
+```
+**Преимущества:**
+- гибкость в обработке разных элементов;
+- можно комбинировать с другими условиями.
 
-В XML можно добавить:
+## 5. Добавление обработчика нажатия на ImageView
+`ImageView` по умолчанию не является кликабельным, поэтому перед добавлением обработчика нужно убедиться, что он включён. Разберём процесс пошагово.
+**Шаг 1. Настройка кликабельности ImageView**
+Есть два способа сделать `ImageView` кликабельным:
+**Способ 1: В XML‑разметке**
+Добавьте атрибуты `android:clickable="true"` и `android:focusable="true"` в описание `ImageView` в XML:
 ```xml
-android:clickable="true"
-android:focusable="true"
+<ImageView
+    android:id="@+id/my_image_view"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:src="@drawable/my_image"
+    android:clickable="true"
+    android:focusable="true" />
+```
+**Способ 2: Программно в Kotlin**
+Установите свойства `isClickable` и `isFocusable` в `true` в коде Kotlin:
+```kotlin
+val imageView: ImageView = findViewById(R.id.my_image_view)
+imageView.isClickable = true
+imageView.isFocusable = true
+```
+**Шаг 2. Добавление обработчика клика**
+После того как `ImageView` стал кликабельным, добавьте обработчик нажатия через `setOnClickListener`:
+```kotlin
+val imageView: ImageView = findViewById(R.id.my_image_view)
+imageView.setOnClickListener {
+    Toast.makeText(this, "Изображение нажато!", Toast.LENGTH_SHORT).show()
+}
+```
+**Шаг 3. Добавление визуальной обратной связи**
+Чтобы пользователь видел, что элемент реагирует на нажатие, добавьте эффект нажатия. Рассмотрим два способа.
+**Способ 1: Через атрибут `foreground` (простой способ)**
+Добавьте `android:foreground="?attr/selectableItemBackground"` в XML — это добавит стандартный эффект ряби (ripple effect) при нажатии:
+```xml
+<ImageView
+    android:id="@+id/my_image_view"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:src="@drawable/my_image"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground" />
+```
+**Способ 2: Через фоновый селектор (кастомизация)**
+1. Создайте файл `res/drawable/imageview_selector.xml` со следующим содержимым:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/accent_color" android:state_pressed="true"/>
+    <item android:drawable="@color/background_white"/>
+</selector>
+```
+2. Установите этот селектор как фон в `ImageView`:
+```xml
+<ImageView
+    android:id="@+id/my_image_view"
+    android:layout_width="100dp"
+    android:layout_height="100dp"
+    android:src="@drawable/my_image"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="@drawable/imageview_selector" />
 ```
 
 **Вывод:** Освоила создание пользовательского интерфейса в Android с использованием ConstraintLayout, изучила основные компоненты: ImageView, TextView, Button. Научилась работать с ресурсами (строки, цвета, размеры) и обрабатывать нажатия кнопок.
