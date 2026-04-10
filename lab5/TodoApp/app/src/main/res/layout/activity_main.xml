@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Блок 1: Счётчик -->
+    <TextView
+        android:id="@+id/textCounter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/counter_text"
+        android:textSize="24sp"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Горизонтальный контейнер для кнопок счётчика -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/buttonIncrement"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/button_increment"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/buttonReset"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/button_count"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <!-- Блок 2: Поле ввода и отображение текста -->
+    <EditText
+        android:id="@+id/editTextInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/hint_input"
+        android:inputType="text"
+        android:layout_marginBottom="8dp"/>
+
+    <Button
+        android:id="@+id/buttonShow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/button_show"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/textEntered"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_entered"
+        android:textSize="18sp"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Блок 3: ToDo список -->
+    <EditText
+        android:id="@+id/editTextTask"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/hint_input"
+        android:inputType="text"
+        android:layout_marginBottom="8dp"/>
+    <!-- Счётчик задач -->
+    <TextView
+        android:id="@+id/textTaskCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Задач: 0"
+        android:textSize="16sp"
+        android:textColor="#666666"
+        android:layout_marginTop="8dp" />
+
+    <!-- Горизонтальный контейнер для кнопок задач -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="start"
+        android:layout_marginTop="8dp">
+
+        <Button
+            android:id="@+id/buttonAddTask"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/button_add_task"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp" />
+
+        <Button
+            android:id="@+id/buttonRemoveLast"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/button_del"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textTasks"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="@string/label_tasks"
+        android:textSize="18sp"
+        android:background="#F0F0F0"
+        android:padding="8dp"/>
+
+
+</LinearLayout>
