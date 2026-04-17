@@ -41,7 +41,7 @@
 <br><br>
 
 
-# Листинг файла `item_task.xml`
+## Листинг файла `item_task.xml`
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -86,7 +86,7 @@
 
 <br><br>
 
-# Листинг файла `TaskAdapter.kt`
+## Листинг файла `TaskAdapter.kt`
 
 ```kotlin
 package com.example.lab6
@@ -196,7 +196,7 @@ class TaskAdapter(
 
 <br><br>
 
-# Листинг файла `Main.Activity.kt`
+## Листинг файла `Main.Activity.kt`
 
 ```kotlin
 package com.example.lab6
@@ -349,7 +349,7 @@ class MainActivity : AppCompatActivity() {
 
 <br><br>
 
-# Скриншот приложения с отображением результатов
+## Скриншот приложения с отображением результатов
 ![My Image](images/screen.png)
 
 <br><br>
