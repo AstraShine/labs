@@ -41,7 +41,7 @@
 <br><br>
 
 
-## Листинг файла `item_task.xml`
+# Листинг файла `item_task.xml`
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -86,7 +86,7 @@
 
 <br><br>
 
-## Листинг файла `TaskAdapter.kt`
+# Листинг файла `TaskAdapter.kt`
 
 ```kotlin
 package com.example.lab6
@@ -196,7 +196,7 @@ class TaskAdapter(
 
 <br><br>
 
-## Листинг файла `Main.Activity.kt`
+# Листинг файла `Main.Activity.kt`
 
 ```kotlin
 package com.example.lab6
@@ -349,14 +349,14 @@ class MainActivity : AppCompatActivity() {
 
 <br><br>
 
-### Скриншот приложения с отображением результатов
-![My Image](images/screen.jpg)
+# Скриншот приложения с отображением результатов
+![My Image](images/screen.png)
 
 <br><br>
 
-### Ответы на контрольные вопросы:
+## Ответы на контрольные вопросы:
 
-#### 1. Для чего нужен RecyclerView? Чем он лучше ListView?
+### 1. Для чего нужен RecyclerView? Чем он лучше ListView?
 
 **RecyclerView** — компонент Android для отображения прокручиваемых списков (списков, сеток, каруселей и т. д.).
 
@@ -367,7 +367,7 @@ class MainActivity : AppCompatActivity() {
 * **Анимации:** встроенная поддержка плавных анимаций при изменении данных (добавление, удаление, перемещение элементов).
 * **Оптимизация:** более продуманная архитектура с разделением ответственности между компонентами.
 
-#### 2. Какие компоненты необходимы для работы RecyclerView?
+### 2. Какие компоненты необходимы для работы RecyclerView?
 
 Для работы RecyclerView нужны 4 компонента:
 
@@ -376,7 +376,7 @@ class MainActivity : AppCompatActivity() {
 3. **Adapter** — «мост» между данными и RecyclerView: передаёт данные в ViewHolder и создаёт ViewHolder‑ы.
 4. **ViewHolder** — хранит ссылки на View элемента списка (кэширует их), чтобы не искать каждый раз через `findViewById()`.
 
-#### 3. Что такое ViewHolder и для чего он используется?
+### 3. Что такое ViewHolder и для чего он используется?
 
 **ViewHolder** — класс, который:
 
@@ -386,7 +386,7 @@ class MainActivity : AppCompatActivity() {
 
 **Цель:** избежать вызова `findViewById()` при каждом отображении элемента — это значительно ускоряет скроллинг.
 
-#### 4. Чем отличается `notifyDataSetChanged()` от `notifyItemInserted()`?
+### 4. Чем отличается `notifyDataSetChanged()` от `notifyItemInserted()`?
 
 * **`notifyDataSetChanged()`** — сообщает RecyclerView, что **все данные** в адаптере изменились. Приводит к полному перестроению списка: все элементы пересоздаются и перерисовываются. **Менее эффективно**, но просто в использовании.
 * **`notifyItemInserted(position)`** — сообщает, что **в определённую позицию** (`position`) добавлен новый элемент. RecyclerView анимирует добавление только этого элемента, остальные не трогаются. **Более эффективно**, требует точного указания позиции.
@@ -397,7 +397,7 @@ class MainActivity : AppCompatActivity() {
 * `notifyItemChanged(position)` — изменение элемента.
 * `notifyItemMoved(fromPosition, toPosition)` — перемещение элемента.
 
-#### 5. Как добавить обработку кликов на элементы RecyclerView?
+### 5. Как добавить обработку кликов на элементы RecyclerView?
 
 Реализация на Kotlin
 
