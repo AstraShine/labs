@@ -13,9 +13,9 @@
 
 <br><br><br><br>
 
-Лабораторная работа №6
+Лабораторная работа №8
 
-«Отображение списка задач в карточках»
+«Перенос логики списка задач из `Activity` в `ViewModel`. Использование `StateFlow` для хранения состояния»
 
 01.03.02 Прикладная математика и информатика
 
@@ -36,52 +36,81 @@
 
 <br><br>
 
-**Цель работы:** Научиться использовать `RecyclerView` для отображения списка данных, освоить создание адаптера и `ViewHolder`, применить `CardView` для оформления элементов списка.
+**Цель работы:** Изучить архитектурный компонент `ViewModel`, научиться выносить логику и состояние `UI` из `Activity`, использовать `StateFlow` для реактивного обновления данных, обеспечить сохранение состояния при изменении конфигурации.
 
 <br><br>
 
 
-## Листинг файла `item_task.xml`
+## Листинг файла `MainViewModel`
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Объявление XML-документа с указанием версии и кодировки -->
+```kotlin
+package com.example.lab8
 
-<!-- Пространства имён (namespaces):
-         - xmlns:android — стандартное пространство имён Android для базовых атрибутов.
-         - xmlns:app — пространство имён для атрибутов из библиотек поддержки (в т. ч. CardView).-->
-<androidx.cardview.widget.CardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="#FFFFFF">
+import androidx.lifecycle.ViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp">
+class MainViewModel : ViewModel() {
+    private val _tasks = MutableStateFlow<List<Pair<String, Boolean>>>(emptyList())
+    val tasks: StateFlow<List<Pair<String, Boolean>>> = _tasks.asStateFlow()
 
-        <TextView
-            android:id="@+id/textTask"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="18sp"
-            android:textColor="#333333"/>
+    fun addTask(task: String) {
+        val currentList = _tasks.value.toMutableList()
+        currentList.add(task to false)
+        _tasks.value = currentList
+    }
 
-        <CheckBox
-            android:id="@+id/checkTask"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+    fun deleteTask(index: Int) {
+        val currentList = _tasks.value.toMutableList()
+        if (index in currentList.indices) {
+            currentList.removeAt(index)
+            _tasks.value = currentList
+        }
+    }
 
-    </LinearLayout>
+    fun updateTaskCompletion(index: Int, isCompleted: Boolean) {
+        val currentList = _tasks.value.toMutableList()
+        if (index in currentList.indices) {
+            currentList[index] = currentList[index].first to isCompleted
+            _tasks.value = currentList
+        }
+    }
 
-</androidx.cardview.widget.CardView>
+    fun loadTestData() {
+        _tasks.value = listOf(
+            "Купить продукты" to false,
+            "Сделать ДЗ по Android" to false,
+            "Позвонить маме" to false,
+            "Записаться к врачу" to false
+        )
+    }
+
+    fun updateTaskText(oldText: String, newText: String) {
+        val currentList = _tasks.value.toMutableList()
+        val index = currentList.indexOfFirst { it.first == oldText }
+        if (index != -1) {
+            currentList[index] = newText to currentList[index].second
+            _tasks.value = currentList
+        }
+    }
+
+    fun deleteTaskByText(taskText: String) {
+        val currentList = _tasks.value.toMutableList()
+        val index = currentList.indexOfFirst { it.first == taskText }
+        if (index != -1) {
+            currentList.removeAt(index)
+            _tasks.value = currentList
+        }
+    }
+
+    fun insertTaskAtPosition(position: Int, taskText: String) {
+        val currentList = _tasks.value.toMutableList()
+        // Вставляем задачу на прежнюю позицию с состоянием "не выполнена"
+        currentList.add(position, taskText to false)
+        _tasks.value = currentList
+    }
+}
 ```
 
 <br><br>
@@ -89,8 +118,7 @@
 ## Листинг файла `TaskAdapter.kt`
 
 ```kotlin
-package com.example.lab6
-// Пакет, к которому принадлежит класс. Соответствует структуре проекта.
+package com.example.lab8
 
 import android.graphics.Paint
 import android.view.LayoutInflater
@@ -99,251 +127,343 @@ import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-// Импорты необходимых классов Android и библиотеки RecyclerView.
+
 
 class TaskAdapter(
-    private val tasks: MutableList<String>,
-    // Список задач, отображаемых в RecyclerView. Изменяемый (MutableList).
-    private val onItemClick: (Int, String) -> Unit
-    // Лямбда‑функция для обработки клика на элементе списка.
-    // Принимает два параметра: позицию элемента (Int) и текст задачи (String).
-) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>() {
-    // Класс адаптера для RecyclerView, параметризованный собственным ViewHolder'ом.
+    private var tasks: List<Pair<String, Boolean>>,
+    private val onItemClick: (Int) -> Unit,
+    private val onItemLongClick: (Int) -> Unit,
+    private val onCheckChanged: (Int, Boolean) -> Unit
+) : RecyclerView.Adapter<TaskAdapter.TaskViewHolder>()
+ {
 
-    // ViewHolder хранит ссылки на элементы внутри карточки
     class TaskViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val textTask: TextView = itemView.findViewById(R.id.textTask)
-        // Ссылка на TextView с текстом задачи (из item_task.xml).
-
         val checkTask: CheckBox = itemView.findViewById(R.id.checkTask)
-        // Ссылка на CheckBox (флажок выполнения задачи) из item_task.xml.
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TaskViewHolder {
-        // Создаёт новый ViewHolder при необходимости (когда RecyclerView нуждается в новом элементе).
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_task, parent, false)
-        // Раздувает (inflates) разметку item_task.xml в View.
-        // parent.context — контекст родительского контейнера.
-        // false — не прикреплять View к родительскому контейнеру сразу.
         return TaskViewHolder(view)
     }
 
-    override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-        // Связывает данные (задачу) с конкретным ViewHolder (элементом списка).
-        val task = tasks[position]
-        holder.textTask.text = task
-        // Устанавливает текст задачи в TextView.
 
-        // Установка цвета фона в зависимости от чётности позиции
-        if (position % 2 == 0) {
-            holder.itemView.setBackgroundColor(0xFFF5F5F5.toInt()) // Светло‑серый для чётных
-        } else {
-            holder.itemView.setBackgroundColor(0xFFFFFFFF.toInt()) // Белый для нечётных
-        }
-        // Чередование цветов фона для улучшения читаемости списка:
-        // чётные позиции — светло‑серый (#F5F5F5), нечётные — белый (#FFFFFF).
+     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
+         val (taskText, isCompleted) = tasks[position]
+         holder.textTask.text = taskText
 
-        // Обработка чекбокса (опционально)
-        holder.checkTask.setOnCheckedChangeListener { _, isChecked ->
-            // Слушатель изменения состояния флажка.
-            // _ — игнорируемый параметр (сам CheckBox).
-            // isChecked — текущее состояние (true/false).
+         // Устанавливаем состояние чекбокса
+         holder.checkTask.isChecked = isCompleted
 
-            if (isChecked) {
-                holder.textTask.paintFlags = holder.textTask.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
-                // Если флажок отмечен, добавляем эффект перечёркнутого текста для визуализации выполненности задачи.
-            } else {
-                holder.textTask.paintFlags = holder.textTask.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
-                // Если флажок снят, убираем эффект перечёркивания.
+         // Обновляем стиль текста
+         holder.textTask.paintFlags = if (isCompleted) {
+             holder.textTask.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+         } else {
+             holder.textTask.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+         }
+
+         // Обработчик изменения состояния чекбокса
+         holder.checkTask.setOnCheckedChangeListener { _, isChecked ->
+             onCheckChanged(position, isChecked)
+         }
+
+         holder.itemView.setOnClickListener {
+             onItemClick(position)
+         }
+         holder.itemView.setOnLongClickListener {
+             onItemLongClick(position)
+             true
+         }
+     }
+
+     override fun getItemCount(): Int = tasks.size
+
+     fun updateData(newTasks: List<Pair<String, Boolean>>) {
+         tasks = newTasks
+         notifyDataSetChanged()
+     }
+ }
+```
+
+<br><br>
+
+## Листинг файла `MainActivity.kt`
+
+```kotlin
+package com.example.lab8
+
+import android.content.Intent
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.os.Bundle
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
+import java.util.Collections.emptyList
+
+
+class MainActivity : AppCompatActivity() {
+
+    private val viewModel: MainViewModel by viewModels()
+    private lateinit var adapter: TaskAdapter
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        val editTextTask = findViewById<EditText>(R.id.editTextTask)
+        val buttonAddTask = findViewById<Button>(R.id.buttonAddTask)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTasks)
+
+
+        adapter = TaskAdapter(
+            tasks = emptyList(),
+            onItemClick = { position ->
+                val taskText = viewModel.tasks.value[position].first
+                val intent = Intent(this, DetailActivity::class.java)
+                intent.putExtra("task_text", taskText)
+                detailActivityResultLauncher.launch(intent)
+            },
+            onItemLongClick = { position ->
+                viewModel.deleteTask(position)
+                Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
+            },
+            onCheckChanged = { position, isChecked ->
+                viewModel.updateTaskCompletion(position, isChecked)
+            }
+        )
+
+        // Настройка RecyclerView
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        recyclerView.adapter = adapter
+
+        // Создаём ItemTouchHelper с кастомным callback
+        val itemTouchHelper = ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            0, // Не поддерживаем drag-and-drop
+            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT // Поддерживаем свайп влево и вправо
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean = false // Drag не поддерживаем
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val taskToDelete = viewModel.tasks.value[position]
+
+                // Сохраняем данные удаляемой задачи для возможности отмены
+                val deletedTask = taskToDelete.first
+
+                // Удаляем задачу через ViewModel
+                viewModel.deleteTask(position)
+
+                // Показываем Snackbar с возможностью отмены
+                showUndoSnackbar(deletedTask, position)
+            }
+
+            // Визуальное оформление при свайпе (опционально)
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float,
+                dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+
+                // Подсвечиваем фон при свайпе
+                val itemView = viewHolder.itemView
+                val background = ColorDrawable(Color.RED)
+                background.setBounds(
+                    itemView.right + dX.toInt(),
+                    itemView.top,
+                    itemView.right,
+                    itemView.bottom
+                )
+                background.draw(c)
+            }
+        })
+
+// Прикрепляем ItemTouchHelper к RecyclerView
+        itemTouchHelper.attachToRecyclerView(recyclerView)
+
+
+        // Подписка на изменения списка задач
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.tasks.collect { tasks ->
+                    adapter.updateData(tasks) // предполагаем, что у адаптера есть такой метод
+                }
             }
         }
 
-        holder.itemView.setOnClickListener {
-            onItemClick(position, tasks[position])
-            // Вызывает лямбду onItemClick, передавая позицию и текст задачи.
-            // Используется для обработки обычного клика по элементу списка.
+        // Добавление анимации
+        val itemAnimator = DefaultItemAnimator()
+        itemAnimator.addDuration = 300
+        itemAnimator.removeDuration = 300
+        recyclerView.itemAnimator = itemAnimator
+
+        // Добавление задачи
+        buttonAddTask.setOnClickListener {
+            val task = editTextTask.text.toString()
+            if (task.isNotBlank()) {
+                viewModel.addTask(task)
+                editTextTask.text.clear()
+            } else {
+                Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        // Загрузим тестовые данные при первом запуске (если список пуст)
+        if (viewModel.tasks.value.isEmpty()) {
+            viewModel.loadTestData()
+        }
+
+
+    }
+    private val detailActivityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK && result.data != null) {
+            val action = result.data?.getStringExtra("action")
+            val data = result.data?.getStringExtra("data")
+
+            when (action) {
+                "edit" -> {
+                    val parts = data?.split("|")
+                    if (parts != null && parts.size == 2) {
+                        val originalText = parts[0]
+                        val newText = parts[1]
+                        viewModel.updateTaskText(originalText, newText)
+                    }
+                }
+                "delete" -> {
+                    data?.let { taskText ->
+                        viewModel.deleteTaskByText(taskText)
+                    }
+                }
+            }
         }
     }
 
-    override fun getItemCount(): Int = tasks.size
-    // Возвращает общее количество элементов в списке (размер коллекции tasks).
-
-    // Удаление задачи по позиции
-    fun removeTask(position: Int) {
-        if (position in tasks.indices) {
-            tasks.removeAt(position)
-            // Удаляет элемент из списка по индексу, если индекс корректен.
-            // Проверка `position in tasks.indices` предотвращает ошибки выхода за границы массива.
-        }
-    }
-
-    // Добавление задачи по позиции
-    fun insertTask(position: Int, task: String) {
-        tasks.add(position, task)
-        // Добавляет задачу в список на указанную позицию.
-        // Если позиция превышает текущий размер списка, элемент будет добавлен в конец.
-    }
-
-    // Получение задачи по позиции
-    fun getTaskAt(position: Int): String {
-        return if (position in tasks.indices) tasks[position] else ""
-        // Возвращает текст задачи по индексу или пустую строку, если индекс некорректен.
-        // Позволяет безопасно получать данные без риска выброса исключения.
+    private fun showUndoSnackbar(taskText: String, position: Int) {
+        Snackbar.make(
+            findViewById(android.R.id.content),
+            "Задача '$taskText' удалена",
+            Snackbar.LENGTH_LONG
+        ).setAction("ОТМЕНИТЬ") {
+            // При нажатии "ОТМЕНИТЬ" восстанавливаем задачу
+            viewModel.insertTaskAtPosition(position, taskText)
+        }.show()
     }
 }
 ```
 
 <br><br>
 
-## Листинг файла `Main.Activity.kt`
+## Листинг файла `DetailActivity.kt`
 
 ```kotlin
-package com.example.lab6
-// Пакет, к которому принадлежит класс. Соответствует структуре проекта.
+package com.example.lab8
 
+import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-// Импорты необходимых классов Android и компонентов библиотеки поддержки.
 
-class MainActivity : AppCompatActivity() {
-
-    private val tasks = mutableListOf<String>()
-    // Изменяемый список задач, который будет отображаться в RecyclerView.
-
-    private lateinit var adapter: TaskAdapter
-    // Экземпляр адаптера для RecyclerView (инициализируется позже в onCreate).
+class DetailActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        // Устанавливает разметку activity_main.xml как содержимое активности.
+        setContentView(R.layout.activity_detail)
 
-        val editTextTask = findViewById<EditText>(R.id.editTextTask)
-        // Ссылка на поле ввода текста задачи (EditText) из разметки.
+        val editTextTaskDetail = findViewById<EditText>(R.id.editTextTaskDetail)
+        val buttonBack = findViewById<Button>(R.id.buttonBack)
+        val buttonSave = findViewById<Button>(R.id.buttonSave)
+        val buttonDelete = findViewById<Button>(R.id.buttonDelete)
 
-        val buttonAddTask = findViewById<Button>(R.id.buttonAddTask)
-        // Ссылка на кнопку добавления задачи (Button) из разметки.
+        // Получаем данные из Intent
+        val taskText = intent.getStringExtra("task_text") ?: "Нет данных"
+        // Сохраняем исходный текст для поиска позиции при возврате
+        val originalTaskText = taskText
 
-        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTasks)
-        // Ссылка на RecyclerView из разметки, который будет отображать список задач.
+        editTextTaskDetail.setText(taskText)
 
-        // Настройка RecyclerView
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        // Устанавливает LinearLayoutManager — отвечает за вертикальную раскладку элементов списка.
-
-        adapter = TaskAdapter(tasks, { position, taskText ->
-            showEditDialog(position, taskText)
-        })
-        // Создаёт экземпляр адаптера TaskAdapter, передавая список задач и лямбду для обработки клика.
-        // При клике на элемент вызывается метод showEditDialog для редактирования задачи.
-
-        recyclerView.adapter = adapter
-        // Подключает адаптер к RecyclerView.
-
-        // Добавление анимации
-        val itemAnimator = DefaultItemAnimator()
-        // Создаёт аниматор для плавных анимаций добавления и удаления элементов.
-
-        itemAnimator.addDuration = 300
-        itemAnimator.removeDuration = 300
-        // Задаёт длительность анимаций (300 мс) для добавления и удаления элементов.
-
-        recyclerView.itemAnimator = itemAnimator
-        // Подключает аниматор к RecyclerView.
-
-        // Добавление задачи
-        buttonAddTask.setOnClickListener {
-            val task = editTextTask.text.toString()
-            // Получает текст из поля ввода.
-
-            if (task.isNotBlank()) {
-                tasks.add(task)
-                // Добавляет задачу в список, если текст не пустой.
-
-                adapter.notifyItemInserted(tasks.size - 1)
-                // Уведомляет адаптер о добавлении нового элемента
-
-                editTextTask.text.clear()
-                // Очищает поле ввода после добавления задачи.
-            } else {
-                Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
-                // Показывает всплывающее сообщение (Toast), если поле ввода пустое.
-            }
-        }
-
-        // Восстановление данных при повороте экрана (опционально)
-        if (savedInstanceState != null) {
-            val savedTasks = savedInstanceState.getStringArrayList("tasks")
-            // Пытается получить сохранённый список задач из Bundle.
-
-            if (savedTasks != null) {
-                tasks.clear()
-                tasks.addAll(savedTasks)
-                // Восстанавливает список задач из сохранённого состояния.
-
-                adapter.notifyDataSetChanged()
-                // Уведомляет адаптер об изменении данных — все элементы перерисовываются.
-            }
-        }
-
-        val itemTouchHelper = ItemTouchHelper(SwipeToDeleteCallback(this, adapter))
-        // Создаёт помощник для обработки жестов (например, свайпа для удаления).
-
-        itemTouchHelper.attachToRecyclerView(recyclerView)
-        // Прикрепляет обработчик жестов к RecyclerView — позволяет удалять задачи свайпом.
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putStringArrayList("tasks", ArrayList(tasks))
-        // Сохраняет список задач в Bundle перед уничтожением активности (например, при повороте экрана).
-    }
-
-    private fun showEditDialog(position: Int, currentText: String) {
-        // Метод для отображения диалогового окна редактирования задачи.
-
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle("Редактировать задачу")
-        // Создаёт построитель диалогового окна и задаёт заголовок.
-
-        val input = EditText(this)
-        input.setText(currentText)
-        // Создаёт поле ввода и устанавливает текущий текст задачи для редактирования.
-
-        builder.setView(input)
-        // Добавляет поле ввода в диалоговое окно.
-
-        builder.setPositiveButton("Сохранить") { _, _ ->
-            val newText = input.text.toString()
-            // При нажатии «Сохранить» получает новый текст из поля ввода.
-
+        // Кнопка "Сохранить" — редактирование задачи
+        buttonSave.setOnClickListener {
+            val newText = editTextTaskDetail.text.toString()
             if (newText.isNotBlank()) {
-                tasks[position] = newText
-                // Обновляет текст задачи в списке по указанной позиции.
-
-                adapter.notifyItemChanged(position)
-                // Уведомляет адаптер об изменении элемента — перерисовывает только этот элемент.
+                returnResult("edit", "$originalTaskText|$newText")
             } else {
-                Toast.makeText(this, "Текст не может быть пустым", Toast.LENGTH_SHORT).show()
-                // Показывает сообщение, если пользователь пытается сохранить пустую строку.
+                showErrorDialog("Текст задачи не может быть пустым")
             }
         }
 
-        builder.setNegativeButton("Отмена") { dialog, _ -> dialog.cancel() }
-        // Добавляет кнопку «Отмена», которая закрывает диалоговое окно без изменений.
 
-        builder.show()
-        // Отображает диалоговое окно на экране.
+        // Кнопка "Удалить" с подтверждением
+        buttonDelete.setOnClickListener {
+            showDeleteConfirmation { confirmed ->
+                if (confirmed) {
+                    returnResult("delete", originalTaskText)
+                }
+            }
+        }
+
+
+        buttonBack.setOnClickListener {
+            finish()
+        }
     }
+
+    private fun showDeleteConfirmation(onConfirm: (Boolean) -> Unit) {
+        AlertDialog.Builder(this)
+            .setTitle("Подтверждение удаления")
+            .setMessage("Вы уверены, что хотите удалить эту задачу?")
+            .setPositiveButton("Удалить") { _, _ ->
+                onConfirm(true)
+            }
+            .setNegativeButton("Отмена") { _, _ ->
+                onConfirm(false)
+            }
+            .show()
+    }
+
+    private fun showErrorDialog(message: String) {
+        AlertDialog.Builder(this)
+            .setTitle("Ошибка")
+            .setMessage(message)
+            .setPositiveButton("ОК", null)
+            .show()
+    }
+    private fun returnResult(action: String, data: String) {
+        val resultIntent = Intent()
+        resultIntent.putExtra("action", action)
+        resultIntent.putExtra("data", data)
+        setResult(RESULT_OK, resultIntent)
+        finish()
+    }
+
 }
 ```
 
@@ -356,115 +476,167 @@ class MainActivity : AppCompatActivity() {
 
 ## Ответы на контрольные вопросы:
 
-### 1. Для чего нужен RecyclerView? Чем он лучше ListView?
+### 1. Для чего нужен ViewModel? Как он помогает при повороте экрана?
 
-**RecyclerView** — компонент Android для отображения прокручиваемых списков (списков, сеток, каруселей и т. д.).
+**ViewModel** — компонент Android Architecture Components, предназначенный для хранения и управления данными, связанными с UI.
 
-**Преимущества перед ListView:**
+**Основные функции:**
+* хранит данные UI между изменениями конфигурации (поворот экрана, смена темы и т. д.);
+* отделяет логику UI от Activity/Fragment;
+* управляет жизненным циклом данных независимо от жизненного цикла Activity/Fragment.
 
-* **Переиспользование View:** RecyclerView активно переиспользует элементы интерфейса, которые выходят за экран — это экономит память и ускоряет скролл.
-* **Гибкость макета:** поддерживает разные типы разметки через `LayoutManager` (`Linear`, `Grid`, `StaggeredGrid`).
-* **Анимации:** встроенная поддержка плавных анимаций при изменении данных (добавление, удаление, перемещение элементов).
-* **Оптимизация:** более продуманная архитектура с разделением ответственности между компонентами.
+**При повороте экрана:**
+1. Activity/Fragment уничтожается и создаётся заново.
+2. ViewModel сохраняется системой и передаётся новому экземпляру Activity/Fragment.
+3. Данные не нужно перезагружать — они уже есть в ViewModel.
+4. UI быстро восстанавливается с актуальными данными.
 
-### 2. Какие компоненты необходимы для работы RecyclerView?
+Жизненный цикл ViewModel привязан к Activity/Fragment, но переживёт их пересоздание при изменении конфигурации.
 
-Для работы RecyclerView нужны 4 компонента:
+---
 
-1. **RecyclerView** — сам контейнер в разметке (`layout.xml`).
-2. **LayoutManager** — определяет, как располагаются элементы (например, `LinearLayoutManager`, `GridLayoutManager`).
-3. **Adapter** — «мост» между данными и RecyclerView: передаёт данные в ViewHolder и создаёт ViewHolder‑ы.
-4. **ViewHolder** — хранит ссылки на View элемента списка (кэширует их), чтобы не искать каждый раз через `findViewById()`.
+### 2. Чем StateFlow отличается от LiveData? В каких случаях предпочтительнее использовать StateFlow?
 
-### 3. Что такое ViewHolder и для чего он используется?
+**Различия:**
 
-**ViewHolder** — класс, который:
+| Параметр | StateFlow | LiveData |
+|----------|-----------|----------|
+| **Начальное значение** | Обязательно (`MutableStateFlow(initialValue)`) | Не обязательно |
+| **Фильтрация дубликатов** | Автоматическая (сравнение через `equals()`) | Нет (нужно использовать `distinctUntilChanged()`) |
+| **Интеграция с корутинами** | Нативная (часть Kotlin Flow) | Через расширения (`liveData` builder) |
+| **Учёт жизненного цикла** | Нет (требуется ручная настройка) | Да (автоматически учитывает состояние наблюдателей) |
+| **Версионность** | Нет | Да (не отправляет дубликаты при возврате в активное состояние) |
 
-* хранит ссылки на все `View` внутри одного элемента списка (например, `TextView`, `ImageView`);
-* создаётся один раз для каждого типа элемента;
-* переиспользуется при прокрутке — RecyclerView не создаёт новые View, а берёт готовый ViewHolder и обновляет в нём данные.
+**Предпочтительнее использовать StateFlow:**
+* в корутинах — естественная интеграция;
+* когда нужна фильтрация дубликатов без дополнительных операторов;
+* в многоуровневой архитектуре (репозитории, UseCase);
+* при сложных преобразованиях данных с использованием операторов Flow;
+* если вы уже активно используете Kotlin Flow в проекте.
 
-**Цель:** избежать вызова `findViewById()` при каждом отображении элемента — это значительно ускоряет скроллинг.
+---
 
-### 4. Чем отличается `notifyDataSetChanged()` от `notifyItemInserted()`?
+### 3. Что такое lifecycleScope и repeatOnLifecycle? Зачем они нужны при подписке на StateFlow?
 
-* **`notifyDataSetChanged()`** — сообщает RecyclerView, что **все данные** в адаптере изменились. Приводит к полному перестроению списка: все элементы пересоздаются и перерисовываются. **Менее эффективно**, но просто в использовании.
-* **`notifyItemInserted(position)`** — сообщает, что **в определённую позицию** (`position`) добавлен новый элемент. RecyclerView анимирует добавление только этого элемента, остальные не трогаются. **Более эффективно**, требует точного указания позиции.
+**lifecycleScope** — корутинный scope, привязанный к жизненному циклу Activity/Fragment:
+* автоматически отменяет корутины при уничтожении компонента;
+* предотвращает утечки памяти;
+* упрощает управление фоновыми задачами.
 
-**Аналогичные методы для точечного обновления:**
+**repeatOnLifecycle** — функция-расширение, которая:
+* запускает корутину при достижении определённого состояния жизненного цикла (`Lifecycle.State.STARTED` или `RESUMED`);
+* отменяет её, когда компонент переходит в менее активное состояние;
+* перезапускает при возврате в нужное состояние.
 
-* `notifyItemRemoved(position)` — удаление элемента.
-* `notifyItemChanged(position)` — изменение элемента.
-* `notifyItemMoved(fromPosition, toPosition)` — перемещение элемента.
+**Зачем нужны при подписке на StateFlow:**
+1. **Безопасность:** предотвращают сбор данных, когда UI не видно (экономия ресурсов).
+2. **Автоматическое управление:** не нужно вручную отписываться/подписываться при изменении жизненного цикла.
+3. **Эффективность:** корутина активна только когда UI готов отображать данные.
 
-### 5. Как добавить обработку кликов на элементы RecyclerView?
-
-Реализация на Kotlin
-
-**Шаг 1. Определите интерфейс слушателя в адаптере**
-
+Пример использования:
 ```kotlin
-class MyAdapter(
-    private val data: List<String>,
-    private val onItemClick: (Int) -> Unit // лямбда-функция для обработки клика
-) : RecyclerView.Adapter<MyAdapter.ViewHolder>() {
-    // Код
-}
-```
-**Шаг 2. Создайте ViewHolder и установите обработчик клика на корневой элемент:**
-
-```inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-    private val textView: TextView = itemView.findViewById(R.id.text_view)
-    init {
-        itemView.setOnClickListener {
-            onItemClick(adapterPosition) // передаём позицию элемента
+lifecycleScope.launch {
+    repeatOnLifecycle(Lifecycle.State.STARTED) {
+        viewModel.stateFlow.collect { data ->
+            // обновление UI
         }
     }
-    fun bind(item: String) {
-        textView.text = item
+}
+```
+
+---
+
+### 4. Как обновить данные в StateFlow?
+
+Для обновления данных используется **MutableStateFlow** (изменяемая версия StateFlow):
+
+1. **Объявление:**
+```kotlin
+private val _state = MutableStateFlow<String>("Начальное значение")
+val state: StateFlow<String> = _state
+```
+2. **Обновление значения:**
+* через свойство `value`:
+```kotlin
+_state.value = "Новое значение"
+```
+* через метод `update()` (для сложных изменений):
+```kotlin
+_state.update { currentValue ->
+    currentValue + " дополнено"
+}
+```
+3. **Трансформации:** можно применять операторы Flow (`map`, `filter` и т. д.) к `state` перед сбором данных.
+
+Все подписчики автоматически получат новое значение (если оно отличается от предыдущего).
+
+---
+
+### 5. Какие преимущества даёт вынос логики в ViewModel с точки зрения тестирования?
+
+**Преимущества:**
+
+* **Изоляция логики:** бизнес‑логика отделена от UI‑компонентов (Activity/Fragment), что позволяет тестировать её отдельно.
+* **Упрощение мокирования:** зависимости (репозитории, UseCase) легко подменять тестовыми реализациями.
+* **Детерминированность:** тесты не зависят от жизненного цикла Android‑компонентов.
+* **Скорость:** юнит‑тесты на ViewModel выполняются быстрее, чем UI‑тесты.
+* **Покрытие:** можно проверить все состояния (загрузка, успех, ошибка) без имитации действий пользователя.
+* **Повторное использование:** одна ViewModel может тестироваться для разных экранов/вариантов UI.
+* **Проверка состояний:** легко верифицировать, что ViewModel генерирует правильные `UiState` для разных сценариев.
+
+**Пример тестирования:**
+```kotlin
+@Test
+fun `loadData success`() {
+    // Given
+    val repository = mock<Repository> {
+        onBlocking { getData() } doReturn Result.Success("data")
     }
+    val viewModel = MyViewModel(repository)
+
+    // When
+    viewModel.loadData()
+
+    // Then
+    assertEquals(UiState.Success("data"), viewModel.uiState.value)
 }
-```
-
-**Шаг 3. В методе onBindViewHolder свяжите данные с ViewHolder**
-
-```kotlin
-override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-    val item = data[position]
-    holder.bind(item)
-}
-```
-
-**Шаг 4. В Activity_Main.kt создайте адаптер и обработайте клик**
-
-```kotlin
-val recyclerView = findViewById<RecyclerView>(R.id.recycler_view)
-recyclerView.layoutManager = LinearLayoutManager(this)
-
-val adapter = MyAdapter(myDataList) { position ->
-    // Обработка клика: что делать при нажатии на элемент с позицией position
-    Toast.makeText(this, "Clicked item $position", Toast.LENGTH_SHORT).show()
-}
-
-recyclerView.adapter = adapter
 ```
 
 ## Вывод
 
-В ходе работы успешно освоено использование `RecyclerView` для отображения списка данных в Android‑приложении.
+В ходе выполнения лабораторной работы успешно изучена работа с архитектурным компонентом `ViewModel` в Android‑приложениях. Реализован менеджер задач с использованием `StateFlow` для реактивного обновления данных и обеспечения сохранения состояния при изменении конфигурации экрана (например, при повороте устройства).
 
 **Достигнуты следующие результаты:**
 
-* Реализован адаптер (`TaskAdapter`) с `ViewHolder` (`TaskViewHolder`), обеспечивающий эффективное переиспользование элементов списка и высокую производительность при скроллинге.
-* Настроен `RecyclerView` в `MainActivity` с `LinearLayoutManager` для вертикальной раскладки элементов.
-* Элементы списка оформлены с помощью `CardView` (файл `item_task.xml`), что обеспечило визуальную привлекательность и отступы между карточками.
-* Реализованы ключевые интерактивные функции:
-  * добавление задач через `EditText` и `Button`;
-  * редактирование задач через диалоговое окно `AlertDialog`;
-  * удаление задач свайпом (с использованием `ItemTouchHelper` и `SwipeToDeleteCallback`);
-  * визуализация статуса выполнения задачи через `CheckBox` (перечёркнутый текст для выполненных задач).
-* Настроены плавные анимации изменений элементов с помощью `DefaultItemAnimator`.
-* Обеспечено сохранение состояния списка задач при повороте экрана через `onSaveInstanceState` и восстановление в `onCreate`.
-* Оптимизировано обновление данных в `RecyclerView` за счёт использования точечных уведомлений (`notifyItemInserted()`, `notifyItemChanged()`) вместо полного обновления (`notifyDataSetChanged()`).
+1. **Реализована архитектура с выделением логики в `ViewModel`:**
+    * вся бизнес‑логика (добавление, удаление, редактирование задач, загрузка тестовых данных) вынесена в класс `MainViewModel`;
+    * `Activity` отвечает только за отображение данных и обработку пользовательских действий;
+    * обеспечено сохранение состояния списка задач при изменении конфигурации.
 
-**Итог:** создана функциональное приложение, демонстрирующее работу с `RecyclerView` в Android на Kotlin.
+2. **Использован `StateFlow` для управления состоянием:**
+    * состояние списка задач хранится в `MutableStateFlow` внутри `ViewModel`;
+    * подписчики (в т. ч. `MainActivity`) автоматически получают обновления при изменении данных;
+    * реализована фильтрация дубликатов — интерфейс обновляется только при реальных изменениях данных.
+
+3. **Настроена реактивность UI:**
+    * в `MainActivity` подписка на `StateFlow` организована через `lifecycleScope` и `repeatOnLifecycle`, что гарантирует:
+        * сбор данных только когда UI активен;
+        * автоматическую отмену корутин при уничтожении `Activity`;
+        * перезапуск сбора данных при возвращении в активное состояние.
+    * `RecyclerView` с адаптером `TaskAdapter` оперативно отражает изменения в списке задач.
+
+4. **Реализованы ключевые функции приложения:**
+    * добавление, удаление и редактирование задач;
+    * отметка задач как выполненных (с визуальным эффектом зачёркивания текста);
+    * свайп для удаления задачи с возможностью отмены через `Snackbar`;
+    * переход к детальному редактированию задачи в `DetailActivity` с подтверждением удаления и проверкой на пустой ввод.
+
+5. **Обеспечена устойчивость и удобство поддержки:**
+    * разделение ответственности между компонентами упрощает тестирование и дальнейшее развитие приложения;
+    * использование стандартных инструментов Android (ViewModel, StateFlow, корутины, RecyclerView) соответствует современным практикам разработки.
+
+---
+
+**Итоги:**
+
+Поставленные цели работы выполнены полностью. Полученное приложение демонстрирует корректную работу с `ViewModel` и `StateFlow`, сохраняет состояние при поворотах экрана, предоставляет удобный пользовательский интерфейс для управления задачами. На практике подтверждены преимущества вынесения логики из `Activity`: повышение тестируемости, снижение связности компонентов и упрощение поддержки кода.
