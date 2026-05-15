@@ -226,13 +226,7 @@ class TaskAdapter(
             holder.itemView.setBackgroundColor(0xFFFFFFFF.toInt())
         }
 
-        // Отключаем слушатель на время обновления
-        holder.checkTask.setOnCheckedChangeListener(null)
-
-        // Устанавливаем актуальное состояние чекбокса (если нужно)
-        // Здесь можно добавить логику восстановления состояния чекбокса, если оно сохраняется
-
-        // Восстанавливаем слушатель с корректной логикой
+        
         holder.checkTask.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 holder.textTask.paintFlags = holder.textTask.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
