@@ -501,7 +501,7 @@ private fun ThemeOption(text: String, selected: Boolean, onSelect: () -> Unit) {
 <br><br>
 
 ## Скриншот приложения с отображением результатов
-![My Image](images/screen.jpg)
+![My Image](images/screen.png)
 
 <br><br>
 
