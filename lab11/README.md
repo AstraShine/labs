@@ -13,9 +13,9 @@
 
 <br><br><br><br>
 
-Лабораторная работа №4
+Лабораторная работа №11
 
-«Верстка экрана профиля пользователя (аватар, имя, кнопка «Редактировать»)»
+«Рефакторинг: добавление слоя Repository между ViewModel и Room»
 
 01.03.02 Прикладная математика и информатика
 
@@ -36,205 +36,426 @@
 
 <br><br>
 
-**Цель работы:** Освоить создание пользовательского интерфейса в Android с использованием ConstraintLayout, изучить основные компоненты: ImageView, TextView, Button. Научиться работать с ресурсами (строки, цвета, размеры) и обрабатывать нажатия кнопок.
+**Цель работы:** Изучить архитектурный паттерн Repository, научиться выделять слой доступа к данным, отделяя его от бизнес-логики, выполнить рефакторинг существующего приложения для использования репозитория.
 
 <br><br>
 
+---
 
-## Листинг файла `activity_main.xml`
+## Листинг файла `TaskRepository.kt`
 
 ```kotlin
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Объявление XML-документа с указанием версии и кодировки -->
+package com.example.lab11.data.repository
 
-<!-- Корневой контейнер — ConstraintLayout, обеспечивающий гибкое позиционирование элементов через привязки -->
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"  <!-- Ширина контейнера занимает всю доступную ширину родителя -->
-    android:layout_height="match_parent" <!-- Высота контейнера занимает всю доступную высоту родителя -->
-    android:background="@color/gray_light" <!-- Фон контейнера — светло‑серый цвет -->
-    tools:context=".MainActivity"> <!-- Указывает, что этот layout связан с MainActivity -->
+import com.example.lab11.database.TaskEntity
+import kotlinx.coroutines.flow.Flow
 
-    <!-- Аватар пользователя -->
-    <ImageView
-        android:id="@+id/imageAvatar" <!-- Уникальный идентификатор элемента -->
-        android:layout_width="@dimen/avatar_size" <!-- Ширина задаётся через ресурс dimen -->
-        android:layout_height="@dimen/avatar_size" <!-- Высота задаётся через ресурс dimen -->
-        android:src="@drawable/ic_profile" <!-- Изображение для отображения -->
-        app:layout_constraintTop_toTopOf="parent" <!-- Привязка к верхнему краю родителя -->
-        app:layout_constraintBottom_toTopOf="@+id/textName" <!-- Привязка нижнего края к верху TextView с именем -->
-        app:layout_constraintLeft_toLeftOf="parent" <!-- Привязка левого края к левому краю родителя -->
-        app:layout_constraintRight_toRightOf="parent" <!-- Привязка правого края к правому краю родителя -->
-        android:layout_marginTop="@dimen/margin_normal" <!-- Отступ сверху -->
-        android:contentDescription="@string/profile_name" /> <!-- Описание для доступности -->
-
-    <!-- Имя пользователя -->
-    <TextView
-        android:id="@+id/textName" <!-- Уникальный идентификатор элемента -->
-        android:layout_width="wrap_content" <!-- Ширина подстраивается под содержимое -->
-        android:layout_height="wrap_content" <!-- Высота подстраивается под содержимое -->
-        android:text="@string/profile_name" <!-- Текст задаётся через строковый ресурс -->
-        android:textSize="@dimen/text_size_name" <!-- Размер текста задаётся через ресурс dimen -->
-        android:textColor="@color/black" <!-- Цвет текста — чёрный -->
-        android:textStyle="bold" <!-- Жирное начертание текста -->
-        app:layout_constraintTop_toBottomOf="@id/imageAvatar" <!-- Привязка к низу ImageView с аватаром -->
-        app:layout_constraintLeft_toLeftOf="parent" <!-- Привязка левого края к левому краю родителя -->
-        app:layout_constraintRight_toRightOf="parent" <!-- Привязка правого края к правому краю родителя -->
-        android:layout_marginTop="@dimen/margin_small" /> <!-- Небольшой отступ сверху -->
-
-    <!-- Статус пользователя -->
-    <TextView
-        android:id="@+id/textStatus" <!-- Уникальный идентификатор элемента -->
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/profile_status" <!-- Текст статуса из строкового ресурса -->
-        android:textSize="@dimen/text_size_status" <!-- Размер текста статуса -->
-        android:textColor="@color/orange" <!-- Цвет текста — оранжевый -->
-        app:layout_constraintTop_toBottomOf="@id/textName" <!-- Привязка к низу TextView с именем -->
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginTop="@dimen/margin_small" />
-
-    <!-- Контейнер для контактной информации (телефон и email) -->
-    <LinearLayout
-        android:id="@+id/LinearLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp" <!-- Фиксированная высота контейнера -->
-        android:orientation="horizontal" <!-- Горизонтальное расположение дочерних элементов -->
-        android:paddingLeft="16dp" <!-- Отступы слева -->
-        android:paddingRight="16dp" <!-- Отступы справа -->
-        app:layout_constraintHorizontal_bias="0.5" <!-- Центрирование по горизонтали -->
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textStatus"> <!-- Привязка к низу TextView со статусом -->
-
-        <!-- Номер телефона -->
-        <TextView
-            android:id="@+id/textPhone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_small"
-            android:layout_marginStart="@dimen/margin_normal"
-            android:text="@string/profile_phone" <!-- Текст телефона из строкового ресурса -->
-            android:textColor="@color/blue_light_2" <!-- Цвет текста — светло‑синий -->
-            android:textSize="@dimen/text_size_status"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"/>
-
-        <!-- Email пользователя -->
-        <TextView
-            android:id="@+id/textEmail"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/margin_small"
-            android:layout_marginStart="@dimen/margin_normal"
-            android:text="@string/profile_email" <!-- Текст email из строкового ресурса -->
-            android:textColor="@color/blue_light_2"
-            android:textSize="@dimen/text_size_status"
-            app:layout_constraintLeft_toLeftOf="@+id/textPhone" <!-- Привязка к левому краю TextView с телефоном -->
-            app:layout_constraintRight_toRightOf="parent"/>
-    </LinearLayout>
-
-    <!-- Кнопка «Редактировать» -->
-    <Button
-        android:id="@+id/buttonEdit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_edit" <!-- Текст кнопки из строкового ресурса -->
-        android:backgroundTint="@color/blue_light" <!-- Цвет фона кнопки — светло‑синий -->
-        app:cornerRadius="@dimen/button_corner_radius" <!-- Радиус скругления углов кнопки -->
-        app:layout_constraintTop_toBottomOf="@+id/LinearLayout" <!-- Привязка к низу LinearLayout с контактами -->
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginTop="@dimen/margin_normal"/> <!-- Отступ сверху -->
-
-    <!-- Кнопка «Выйти» -->
-    <Button
-        android:id="@+id/buttonExit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_exit" <!-- Текст кнопки из строкового ресурса -->
-        android:backgroundTint="@color/blue_light"
-        app:cornerRadius="@dimen/button_corner_radius"
-        app:layout_constraintTop_toBottomOf="@id/buttonEdit" <!-- Привязка к низу кнопки «Редактировать» -->
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginTop="@dimen/margin_normal"/>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+interface TaskRepository {
+    fun getAllTasks(): Flow<List<TaskEntity>>
+    fun getAllSortedTasks(): Flow<List<TaskEntity>>
+    suspend fun addTask(title: String)
+    suspend fun deleteTask(task: TaskEntity)
+    suspend fun updateTask(task: TaskEntity)
+    suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean)
+    suspend fun deleteAllTasks()
+    suspend fun updateTaskByTitle(oldTitle: String, newTitle: String)
+    suspend fun deleteTaskByTitle(title: String)
+}
 ```
 
 <br><br>
 
-## Листинг файла `Main.Activity.kt`
+## Листинг файла `TaskRepositoryImpl.kt`
 
 ```kotlin
-package com.example.profileapp
-// Объявление пакета приложения — определяет пространство имён для класса MainActivity
+package com.example.lab11.data.repository
 
-import androidx.appcompat.app.AppCompatActivity
+import com.example.lab11.database.TaskDao
+import com.example.lab11.database.TaskEntity
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+class TaskRepositoryImpl(
+    private val taskDao: TaskDao
+) : TaskRepository {
+
+    override fun getAllTasks(): Flow<List<TaskEntity>> = taskDao.getAllTasks()
+
+    override fun getAllSortedTasks(): Flow<List<TaskEntity>> = taskDao.getAllTasksSortedByStatusAndDate()
+
+    override suspend fun addTask(title: String) {
+        val task = TaskEntity(title = title)
+        taskDao.insertTask(task)
+    }
+
+    override suspend fun deleteTask(task: TaskEntity) {
+        taskDao.deleteTask(task)
+    }
+
+    override suspend fun updateTask(task: TaskEntity) {
+        taskDao.updateTask(task)
+    }
+
+    override suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) {
+        val updatedTask = task.copy(isCompleted = isCompleted)
+        taskDao.updateTask(updatedTask)
+    }
+
+    override suspend fun deleteAllTasks() {
+        taskDao.deleteAll()
+    }
+
+    override suspend fun updateTaskByTitle(oldTitle: String, newTitle: String) {
+        taskDao.updateTaskByTitle(oldTitle, newTitle)
+    }
+
+    override suspend fun deleteTaskByTitle(title: String) {
+        taskDao.deleteTaskByTitle(title)
+    }
+}
+```
+
+<br><br>
+
+## Листинг файла `InMemoryTaskRepository.kt`
+
+```kotlin
+package com.example.lab11.data.repository
+
+import com.example.lab11.database.TaskEntity
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+
+
+class InMemoryTaskRepository : TaskRepository {
+    private var nextId: Long = 1L
+    private val _tasks = MutableStateFlow<List<TaskEntity>>(emptyList())
+    private val tasks = _tasks.asStateFlow()
+
+    override fun getAllTasks(): Flow<List<TaskEntity>> = tasks
+
+    override fun getAllSortedTasks(): Flow<List<TaskEntity>> = tasks.map { taskList ->
+        taskList.sortedWith(
+            compareBy<TaskEntity> { it.isCompleted }
+                .thenByDescending { it.createdTime }
+        )
+    }
+
+    override suspend fun addTask(title: String) {
+        val newTask = TaskEntity(
+            id = nextId++,
+            title = title,
+            isCompleted = false,
+            createdTime = System.currentTimeMillis()
+        )
+        val currentTasks = _tasks.value
+        _tasks.value = currentTasks + newTask
+    }
+
+    override suspend fun deleteTask(task: TaskEntity) {
+        val currentTasks = _tasks.value
+        _tasks.value = currentTasks.filter { it.id != task.id }
+    }
+
+    override suspend fun updateTask(task: TaskEntity) {
+        val currentTasks = _tasks.value
+        _tasks.value = currentTasks.map { existingTask ->
+            if (existingTask.id == task.id) task else existingTask
+        }
+    }
+
+    override suspend fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) {
+        val updatedTask = task.copy(isCompleted = isCompleted)
+        updateTask(updatedTask)
+    }
+
+    override suspend fun deleteAllTasks() {
+        _tasks.value = emptyList()
+    }
+
+    override suspend fun updateTaskByTitle(oldTitle: String, newTitle: String) {
+        val currentTasks = _tasks.value
+        val taskToUpdate = currentTasks.find { it.title == oldTitle }
+        if (taskToUpdate != null) {
+            val updatedTask = taskToUpdate.copy(title = newTitle)
+            updateTask(updatedTask)
+        }
+    }
+
+    override suspend fun deleteTaskByTitle(title: String) {
+        val currentTasks = _tasks.value
+        val taskToDelete = currentTasks.find { it.title == title }
+        if (taskToDelete != null) {
+            deleteTask(taskToDelete)
+        }
+    }
+}
+```
+
+<br><br>
+
+## Листинг файла `MainViewModel.kt`
+
+```kotlin
+package com.example.lab11.ui.theme
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.lab11.data.repository.TaskRepository
+import com.example.lab11.database.AppDatabase
+import com.example.lab11.database.TaskEntity
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+class MainViewModel(
+    private val repository: TaskRepository
+) : ViewModel() {
+
+    val _tasks = MutableStateFlow<List<TaskEntity>>(emptyList())
+
+    val tasks: StateFlow<List<TaskEntity>> = repository.getAllSortedTasks()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    fun addTask(title: String) {
+        viewModelScope.launch {
+            repository.addTask(title)
+        }
+    }
+
+    fun deleteTask(task: TaskEntity) {
+        viewModelScope.launch {
+            repository.deleteTask(task)
+        }
+    }
+
+    fun toggleTaskCompletion(task: TaskEntity, isCompleted: Boolean) {
+        viewModelScope.launch {
+            repository.toggleTaskCompletion(task, isCompleted)
+        }
+    }
+
+    fun deleteAllTasks() {
+        viewModelScope.launch {
+            repository.deleteAllTasks()
+        }
+    }
+
+    fun updateTask(oldTitle: String, newTitle: String) {
+        viewModelScope.launch {
+            repository.updateTaskByTitle(oldTitle, newTitle)
+        }
+    }
+
+    fun deleteTaskByText(title: String) {
+        viewModelScope.launch {
+            repository.deleteTaskByTitle(title)
+        }
+    }
+}
+```
+
+<br><br>
+
+## Листинг файла `MainViewModelFactory.kt`
+
+```kotlin
+package com.example.lab11
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.lab11.data.repository.TaskRepository
+import com.example.lab11.ui.theme.MainViewModel
+
+class MainViewModelFactory(
+    private val repository: TaskRepository
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return MainViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+```
+
+<br><br>
+
+## Листинг файла `MainActivity.kt`
+
+```kotlin
+package com.example.lab11
+
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
-import kotlin.system.exitProcess
-import androidx.core.content.ContextCompat
-import android.widget.TextView
-// Импорты необходимых классов и функций:
-// - AppCompatActivity — базовый класс для активности с поддержкой обратной совместимости
-// - Bundle — используется для сохранения и восстановления состояния активности
-// - Button, TextView — виджеты интерфейса
-// - Toast — класс для отображения коротких всплывающих сообщений
-// - exitProcess — функция для завершения процесса приложения
-// - ContextCompat — утилита для безопасного получения ресурсов (например, Drawable)
+import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.example.lab11.data.repository.InMemoryTaskRepository
+import com.example.lab11.ui.theme.MainViewModel
+import com.example.lab11.database.AppDatabase
+import com.example.lab11.data.repository.TaskRepositoryImpl
+import kotlinx.coroutines.launch
+import com.example.lab11.data.repository.TaskRepository
+
+
 
 class MainActivity : AppCompatActivity() {
-    // Объявление класса MainActivity, наследующего от AppCompatActivity
+    private var useInMemoryRepository = false
+    private lateinit var repository: TaskRepository
+    private lateinit var viewModel: MainViewModel
+    private lateinit var adapter: TaskAdapter
+
+    companion object {
+        private const val EDIT_TASK_REQUEST_CODE = 1001
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Переопределение метода onCreate — точка входа в активность
-        // Вызывается при создании активности, здесь выполняется основная инициализация
-
         super.onCreate(savedInstanceState)
-        // Вызов реализации onCreate родительского класса — обязательный шаг
-
         setContentView(R.layout.activity_main)
-        // Установка UI-макета (activity_main.xml) в качестве содержимого активности
 
-        // Иконки для TextView
-        val textPhone = findViewById<TextView>(R.id.textPhone)
-        // Находим TextView с ID textPhone в макете
-        val ic_phone = ContextCompat.getDrawable(this, R.drawable.ic_call)
-        // Получаем Drawable-ресурс иконки телефона (ic_call) с учётом контекста активности
-        textPhone.setCompoundDrawablesWithIntrinsicBounds(ic_phone, null, null, null)
-        // Устанавливаем иконку слева от текста в TextView (остальные позиции — null)
+        val editTextTask = findViewById<EditText>(R.id.editTextTask)
+        val buttonAddTask = findViewById<Button>(R.id.buttonAddTask)
+        val buttonToggleRepository = findViewById<Button>(R.id.buttonToggleRepository)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerViewTasks)
 
-        val textEmail = findViewById<TextView>(R.id.textEmail)
-        // Находим TextView с ID textEmail в макете
-        val ic_email = ContextCompat.getDrawable(this, R.drawable.ic_email)
-        // Получаем Drawable-ресурс иконки email (ic_email)
-        textEmail.setCompoundDrawablesWithIntrinsicBounds(ic_email, null, null, null)
-        // Устанавливаем иконку слева от текста в TextView
+        // Инициализация начального репозитория и ViewModel
+        updateRepositoryAndViewModel() // Сначала инициализируем репозиторий
+        updateButtonText() // Затем устанавливаем начальный текст кнопки
 
-        val buttonEdit = findViewById<Button>(R.id.buttonEdit)
-        // Находим кнопку «Редактировать» (buttonEdit) в макете
-        buttonEdit.setOnClickListener {
-            // Устанавливаем обработчик нажатия на кнопку
-            Toast.makeText(this, R.string.toast_message, Toast.LENGTH_SHORT).show()
-            // При нажатии показываем короткое всплывающее сообщение (Toast) с текстом из строкового ресурса
+        // Настройка RecyclerView
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        adapter = TaskAdapter(
+            tasks = emptyList(),
+            onItemClick = { task ->
+                val intent = Intent(this, DetailActivity::class.java)
+                intent.putExtra("task_text", task.title)
+                startActivityForResult(intent, EDIT_TASK_REQUEST_CODE)
+            },
+            onItemLongClick = { task ->
+                viewModel.deleteTask(task)
+                Toast.makeText(this, "Задача удалена", Toast.LENGTH_SHORT).show()
+            },
+            onCheckChange = { task, isChecked ->
+                viewModel.toggleTaskCompletion(task, isChecked)
+            }
+        )
+        recyclerView.adapter = adapter
+
+        // Подписка на изменения списка задач
+        subscribeToTasks()
+
+        // Добавление задачи
+        buttonAddTask.setOnClickListener {
+            val task = editTextTask.text.toString()
+            if (task.isNotBlank()) {
+                viewModel.addTask(task)
+                editTextTask.text.clear()
+            } else {
+                Toast.makeText(this, "Введите задачу", Toast.LENGTH_SHORT).show()
+            }
         }
 
-        val buttonExit = findViewById<Button>(R.id.buttonExit)
-        // Находим кнопку «Выйти» (buttonExit) в макете
-        buttonExit.setOnClickListener {
-            // Устанавливаем обработчик нажатия на кнопку
+        // Кнопка переключения репозитория
+        buttonToggleRepository.setOnClickListener {
+            useInMemoryRepository = !useInMemoryRepository
+            updateRepositoryAndViewModel()
+            subscribeToTasks() // Переподписываемся на новые данные
+            Toast.makeText(
+                this,
+                if (useInMemoryRepository) "Переключено на In‑Memory хранилище"
+                else "Переключено на БД хранилище",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        buttonToggleRepository.setOnClickListener {
+            useInMemoryRepository = !useInMemoryRepository
+            updateRepositoryAndViewModel()
+            subscribeToTasks()
+            Toast.makeText(
+                this,
+                if (useInMemoryRepository) "Переключено на In‑Memory хранилище"
+                else "Переключено на БД хранилище",
+                Toast.LENGTH_SHORT
+            ).show()
+            updateButtonText() // Обновляем текст после переключения
+        }
 
-            // Закрывает основную активность
-            this().finish()
+    }
 
-            // Закрывает приложение
-            exitProcess(0)
+    private fun updateRepositoryAndViewModel() {
+        repository = if (useInMemoryRepository) {
+            InMemoryTaskRepository()
+        } else {
+            TaskRepositoryImpl(AppDatabase.getInstance(this).taskDao())
+        }
+        viewModel = MainViewModel(repository)
+        updateButtonText() // Обновляем текст кнопки
+    }
+
+    private fun updateButtonText() {
+        val buttonToggleRepository = findViewById<Button>(R.id.buttonToggleRepository)
+        buttonToggleRepository.text = if (useInMemoryRepository) {
+            "Переключиться на БД"
+        } else {
+            "Переключиться на In‑Memory"
+        }
+    }
+
+
+    private fun subscribeToTasks() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.tasks.collect { tasks ->
+                    adapter.updateData(tasks)
+                }
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == EDIT_TASK_REQUEST_CODE && resultCode == RESULT_OK && data != null) {
+            val action = data.getStringExtra("action")
+            val dataString = data.getStringExtra("data")
+
+            when (action) {
+                "edit" -> {
+                    val parts = dataString?.split("|")
+                    if (parts != null && parts.size == 2) {
+                        val oldText = parts[0]
+                        val newText = parts[1]
+                        if (oldText.isNotBlank() && newText.isNotBlank()) {
+                            viewModel.updateTask(oldText, newText)
+                        } else {
+                            Toast.makeText(this, "Некорректные данные для редактирования", Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        Toast.makeText(this, "Ошибка при разборе данных", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                "delete" -> {
+                    if (!dataString.isNullOrEmpty()) {
+                        viewModel.deleteTaskByText(dataString)
+                    } else {
+                        Toast.makeText(this, "Не удалось получить текст задачи для удаления", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
     }
 }
@@ -242,221 +463,145 @@ class MainActivity : AppCompatActivity() {
 
 <br><br>
 
-### Скриншот приложения с отображением результатов
-![My Image](images/Screen.jpg)
+## Скриншот приложения с отображением результатов
+![My Image](images/screen.png)
 
 <br><br>
 
-### Ответы на контрольные вопросы:
+---
 
-#### 1. ConstraintLayout: назначение и преимущества перед LinearLayout**
+## Ответы на контрольные вопросы:
 
-**ConstraintLayout** — контейнер для размещения элементов интерфейса в Android‑приложениях. Позволяет гибко позиционировать и связывать виджеты относительно друг друга или родительского контейнера.
+### 1. Какую роль выполняет слой Repository в архитектуре приложения?
 
-**Преимущества перед LinearLayout**
+Слой **Repository** (репозиторий) выполняет роль центрального хранилища данных и координатора источников данных в архитектуре приложения. Его ключевые функции:
 
-* **Гибкость позиционирования.** В `ConstraintLayout` элементы можно привязывать к любым сторонам других элементов или границ контейнера. В `LinearLayout` элементы располагаются только последовательно (горизонтально/вертикально).
-* **Снижение вложенности.** Позволяет избежать глубоких иерархий контейнеров — это улучшает производительность. `LinearLayout` часто требует вложенных контейнеров для сложных макетов.
-* **Адаптивность.** Лучше адаптируется к разным размерам экранов и ориентациям без необходимости создавать отдельные XML‑файлы.
-* **Оптимизация производительности.** За счёт плоской иерархии виджетов рендеринг происходит быстрее по сравнению с глубоко вложенными `LinearLayout`.
-* **Поддержка цепочек (Chains).** Позволяет равномерно распределять элементы по горизонтали или вертикали с гибким управлением отступами.
-* **Базовые линии (Baseline alignment).** Можно выравнивать текст в разных элементах по базовой линии.
+* **Абстракция источников данных.** Скрывает детали реализации — откуда берутся данные (локальная БД Room, сетевое API, кэш и т. д.).
+* **Унификация доступа.** Предоставляет единый API для получения и сохранения данных независимо от их источника.
+* **Оркестрация данных.** Объединяет данные из разных источников (например, сначала берёт из локального кэша, затем обновляет с сервера).
+* **Бизнес‑логика на уровне данных.** Реализует правила обработки данных: валидацию, трансформацию, агрегацию.
+* **Кэширование.** Может хранить часто используемые данные для ускорения доступа и снижения нагрузки на сеть/БД.
+* **Управление синхронизацией.** Координирует синхронизацию между локальными и удалёнными данными.
 
-#### 2. Атрибуты app:layout_constraint...
+В итоге ViewModel взаимодействует только с репозиторием, не зная о конкретных механизмах получения данных.
 
-Атрибуты с префиксом `app:layout_constraint` используются в `ConstraintLayout` для определения связей (ограничений) между элементами. Они задают, как виджет должен быть позиционирован относительно других виджетов или границ контейнера.
+### 2. Какие преимущества даёт использование Repository по сравнению с прямым обращением к DAO из ViewModel?
 
-**Основные атрибуты**
+Использование **Repository** вместо прямого обращения к **DAO** из **ViewModel** даёт следующие преимущества:
 
-* `app:layout_constraintLeft_toLeftOf` — левая сторона элемента привязывается к левой стороне указанного элемента.
-* `app:layout_constraintLeft_toRightOf` — левая сторона элемента привязывается к правой стороне указанного элемента.
-* Аналогичные атрибуты для других сторон:
-  * `...Right_toLeftOf`
-  * `...Right_toRightOf`
-  * `...Top_toTopOf`
-  * `...Top_toBottomOf`
-  * `...Bottom_toTopOf`
-  * `...Bottom_toBottomOf`
-* `app:layout_constraintStart_toStartOf` / `app:layout_constraintEnd_toEndOf` — привязки для языков с направлением письма справа налево (RTL).
-* `app:layout_constraintTop_bias` — смещение элемента вдоль горизонтальной/вертикальной оси (значение от $0$ до $1$).
-* `app:layout_constraintWidth_percent` / `app:layout_constraintHeight_percent` — установка размера элемента в процентах от доступного пространства.
+* **Разделение ответственности.** ViewModel отвечает за состояние UI, Repository — за получение и обработку данных. Это соответствует принципу единственной ответственности (SRP).
+* **Тестируемость.** Репозиторий можно легко мокировать в unit‑тестах ViewModel, изолируя её от реальной БД.
+* **Гибкость и расширяемость.** Добавление нового источника данных (например, сетевого API) не затрагивает ViewModel — изменения вносятся только в репозиторий.
+* **Повторное использование кода.** Логика доступа к данным централизована в репозитории и может использоваться несколькими ViewModel.
+* **Упрощение ViewModel.** ViewModel становится «тоньше» — она не содержит сложной логики работы с данными, а лишь вызывает методы репозитория.
+* **Изоляция изменений.** Изменения в слое данных (смена ORM, изменение структуры БД) не затрагивают ViewModel.
+* **Централизованное управление ошибками.** Обработка исключений и ошибок сети/БД сосредоточена в репозитории.
 
-#### 3. Вынесение размеров и цветов в ресурсы
+### 3. Как изменится ViewModel, если мы захотим добавить ещё один источник данных (например, сетевое API)?
 
-**Цвета**
+При добавлении нового источника данных (например, **сетевого API**) **ViewModel практически не изменится**. Вот как это работает:
 
-1. Создайте или откройте файл `res/values/colors.xml`.
-2. Добавьте цветовые ресурсы с уникальными именами:
+1. **Изменения в репозитории:**
+    * Добавляется зависимость от сетевого API (например, Retrofit).
+    * Реализуется логика комбинирования источников: например, сначала берутся данные из локальной БД (Room), затем асинхронно запрашиваются свежие данные с сервера.
+    * Обновляются методы репозитория для работы с новым источником (например, добавление методов загрузки с сервера и синхронизации).
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <color name="primary_color">#3F51B5</color>
-    <color name="accent_color">#FF4081</color>
-    <color name="background_white">#FFFFFF</color>
-    <color name="text_dark">#333333</color>
-</resources>
-```
-3. Используйте в разметке через ссылку `@color/имя_ресурса`:
+2. **Логика в репозитории:**
+    * Репозиторий решает, когда обращаться к сети, а когда брать данные из кэша.
+    * Реализуется стратегия синхронизации (например, «сначала кэш, потом сеть» или «только сеть»).
+    * Обрабатываются сетевые ошибки и конфликты данных.
+
+3. **Отсутствие изменений в ViewModel:**
+    * ViewModel продолжает вызывать те же методы репозитория (например, `getUsers()`).
+    * Она не знает и не должна знать, откуда берутся данные — из БД, сети или их комбинации.
+    * UI продолжает обновляться через `LiveData`/`StateFlow` так же, как и раньше.
+
+Таким образом, вся сложность добавления нового источника данных локализуется в слое репозитория, а ViewModel остаётся неизменной.
+
+### 4. Почему методы репозитория объявлены как `suspend`?
+
+Методы репозитория объявляются как **`suspend`** по следующим причинам:
+
+* **Асинхронность операций.** Операции с данными (запросы к БД, сетевые вызовы) могут занимать значительное время. `suspend`-функции позволяют выполнять их асинхронно, не блокируя основной поток.
+* **Предотвращение ANR.** Длительные операции в основном потоке приводят к ошибкам ANR (Application Not Responding). Корутины с `suspend`-функциями гарантируют выполнение в фоновом контексте.
+* **Согласованность API.** Если часть методов репозитория выполняет асинхронные операции (например, сетевые запросы), то все методы лучше сделать `suspend` для единообразия.
+* **Интеграция с корутинами.** Репозиторий может комбинировать вызовы к разным асинхронным источникам (БД, сеть) в одной корутине, используя `withContext`, `async` и т. д.
+* **Обработка ошибок.** Исключения из асинхронных операций (сетевые ошибки, ошибки БД) могут быть обработаны в том же корутинном блоке.
+* **Поддержка Flow/StateFlow.** Методы репозитория могут возвращать `Flow` или `StateFlow`, которые естественно работают с корутинами.
+* **Последовательность выполнения.** В корутине можно последовательно выполнить несколько асинхронных вызовов (например, сохранить в БД → отправить на сервер → обновить статус), сохраняя читаемость кода.
+
+Пример:
 ```kotlin
-android:background="@color/primary_color"
-android:textColor="@color/text_dark"
-```
-**Размеры**
-1. Создайте или откройте файл `res/values/dimens.xml`.
-2. Определите размеры с понятными именами:
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <dimen name="text_size_large">24sp</dimen>
-    <dimen name="text_size_medium">16sp</dimen>
-    <dimen name="margin_small">8dp</dimen>
-    <dimen name="margin_medium">16dp</dimen>
-    <dimen name="margin_large">32dp</dimen>
-    <dimen name="button_height">48dp</dimen>
-</resources>
-```
-3. Применяйте в разметке через `@dimen/имя_ресурса`:
-```kotlin
-android:textSize="@dimen/text_size_medium"
-android:layout_margin="@dimen/margin_medium"
-android:layout_height="@dimen/button_height"
-```
-
-**Зачем выносить в ресурсы?**
-- **Централизованное управление.** Все значения в одном месте — легко менять и поддерживать.
-- **Повторное использование.** Один ресурс можно применять в разных частях приложения.
-- **Адаптивность.** Можно создавать разные файлы ресурсов для: разных размеров экранов (values-sw600dp/ для планшетов); разных ориентаций (values-land/); разных плотностей пикселей (drawable-hdpi/, drawable-xhdpi/ и т. д.).
-- **Соблюдение единого стиля.** Гарантирует единообразие цветов и размеров во всём приложении.
-- **Упрощение локализации.** Облегчает поддержку разных языков и региональных настроек.
-- **Лёгкое обновление дизайна.** Изменение одного значения в ресурсах автоматически применяется везде.
-
-#### 4. Обработка клика на кнопке в Kotlin‑коде
-
-Существует несколько способов обработки клика на кнопке в Android‑приложениях на Kotlin. Ниже — основные варианты.
-**Способ 1: `setOnClickListener` с лямбда‑выражением (рекомендуемый)**
-Самый простой и лаконичный способ для обработки клика одной кнопки.
-
-```kotlin
-val button: Button = findViewById(R.id.my_button)
-button.setOnClickListener {
-    Toast.makeText(this, "Кнопка нажата!", Toast.LENGTH_SHORT).show()
-    // Здесь можно добавить любую другую логику
+suspend fun getUser(id: Int): User {
+    // Сначала берём из БД (асинхронно)
+    val localUser = userDao.getUserById(id)
+    // Затем обновляем с сервера (асинхронно)
+    val remoteUser = apiService.fetchUser(id)
+    // Сохраняем обновлённые данные в БД
+    userDao.updateUser(remoteUser)
+    return remoteUser
 }
 ```
-**Преимущества:**
-- минимум кода;
-- интуитивно понятный синтаксис;
-- подходит для простых сценариев.
-**Способ 2: Реализация интерфейса View.OnClickListener**
-Подходит, когда нужно обрабатывать клики нескольких элементов в одном активити или фрагменте.
-```kotlin
-class MainActivity : AppCompatActivity(), View.OnClickListener {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+### 5. Что такое инверсия зависимостей и как она применяется в данном рефакторинге?
 
-        // Назначаем обработчик для кнопок
-        findViewById<Button>(R.id.button1).setOnClickListener(this)
-        findViewById<Button>(R.id.button2).setOnClickListener(this)
-    }
+**Инверсия зависимостей** (Dependency Inversion) — это принцип из SOLID (DIP — Dependency Inversion Principle), который гласит:
 
-    override fun onClick(v: View?) {
-        when (v?.id) {
-            R.id.button1 -> {
-                Toast.makeText(this, "Нажата кнопка 1", Toast.LENGTH_SHORT).show()
-            }
-            R.id.button2 -> {
-                Toast.makeText(this, "Нажата кнопка 2", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-}
-```
-**Преимущества:**
-- централизованная обработка кликов;
-- удобно, если много кнопок в одном месте;
-- легко добавлять новые обработчики.
-**Способ 3: Лямбда‑выражение с явной проверкой ID**
-Используется, когда нужно обработать клик и проверить ID элемента внутри лямбды.
-```kotlin
-findViewById<Button>(R.id.my_button).setOnClickListener { clickedView ->
-    when (clickedView.id) {
-        R.id.my_button -> {
-            Toast.makeText(this, "Основная кнопка нажата", Toast.LENGTH_SHORT).show()
-        }
-        // Можно добавить другие условия
-    }
-}
-```
-**Преимущества:**
-- гибкость в обработке разных элементов;
-- можно комбинировать с другими условиями.
+> A. Модули верхних уровней не должны зависеть от модулей нижних уровней. Оба должны зависеть от абстракций.  
+> B. Абстракции не должны зависеть от деталей. Детали должны зависеть от абстракций.
 
-#### 5. Добавление обработчика нажатия на ImageView
-`ImageView` по умолчанию не является кликабельным, поэтому перед добавлением обработчика нужно убедиться, что он включён. Разберём процесс пошагово.
-**Шаг 1. Настройка кликабельности ImageView**
-Есть два способа сделать `ImageView` кликабельным:
-**Способ 1: В XML‑разметке**
-Добавьте атрибуты `android:clickable="true"` и `android:focusable="true"` в описание `ImageView` в XML:
-```xml
-<ImageView
-    android:id="@+id/my_image_view"
-    android:layout_width="100dp"
-    android:layout_height="100dp"
-    android:src="@drawable/my_image"
-    android:clickable="true"
-    android:focusable="true" />
+**Применение в рефакторинге с Repository:**
+
+1. **До рефакторинга (нарушение DIP):**
+    * **ViewModel** (модуль верхнего уровня) напрямую зависит от **DAO** (модуль нижнего уровня, конкретная реализация).
+    * Это жёсткая связь: ViewModel привязана к конкретной БД (Room) и не может работать с другими источниками данных без изменений.
+
+2. **После рефакторинга (соблюдение DIP):**
+    * Создаётся **абстрактный интерфейс репозитория** (абстракция).
+    * **ViewModel** зависит только от этого интерфейса, а не от конкретной реализации.
+    * Конкретная реализация репозитория (например, `UserRepositoryImpl`) зависит от абстракции (интерфейса репозитория) и реализует её.
+    * Реализация репозитория зависит от деталей (DAO, Retrofit, кэша и т. д.), а не наоборот.
+
+**Схема зависимостей после рефакторинга:**
+
 ```
-**Способ 2: Программно в Kotlin**
-Установите свойства `isClickable` и `isFocusable` в `true` в коде Kotlin:
-```kotlin
-val imageView: ImageView = findViewById(R.id.my_image_view)
-imageView.isClickable = true
-imageView.isFocusable = true
-```
-**Шаг 2. Добавление обработчика клика**
-После того как `ImageView` стал кликабельным, добавьте обработчик нажатия через `setOnClickListener`:
-```kotlin
-val imageView: ImageView = findViewById(R.id.my_image_view)
-imageView.setOnClickListener {
-    Toast.makeText(this, "Изображение нажато!", Toast.LENGTH_SHORT).show()
-}
-```
-**Шаг 3. Добавление визуальной обратной связи**
-Чтобы пользователь видел, что элемент реагирует на нажатие, добавьте эффект нажатия. Рассмотрим два способа.
-**Способ 1: Через атрибут `foreground` (простой способ)**
-Добавьте `android:foreground="?attr/selectableItemBackground"` в XML — это добавит стандартный эффект ряби (ripple effect) при нажатии:
-```xml
-<ImageView
-    android:id="@+id/my_image_view"
-    android:layout_width="100dp"
-    android:layout_height="100dp"
-    android:src="@drawable/my_image"
-    android:clickable="true"
-    android:focusable="true"
-    android:foreground="?attr/selectableItemBackground" />
-```
-**Способ 2: Через фоновый селектор (кастомизация)**
-1. Создайте файл `res/drawable/imageview_selector.xml` со следующим содержимым:
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/accent_color" android:state_pressed="true"/>
-    <item android:drawable="@color/background_white"/>
-</selector>
-```
-2. Установите этот селектор как фон в `ImageView`:
-```xml
-<ImageView
-    android:id="@+id/my_image_view"
-    android:layout_width="100dp"
-    android:layout_height="100dp"
-    android:src="@drawable/my_image"
-    android:clickable="true"
-    android:focusable="true"
-    android:background="@drawable/imageview_selector" />
+ViewModel (верхний уровень)
+     ↓ (зависит от абстракции)
+IUserRepository (интерфейс, абстракция)
+     ↑ (реализует абстракцию, зависит от неё)
+UserRepositoryImpl (конкретная реализация)
+     ↓ (зависит от деталей)
+DAO, API Service, Cache (нижние уровни)
 ```
 
-**Вывод:** Освоила создание пользовательского интерфейса в Android с использованием ConstraintLayout, изучила основные компоненты: ImageView, TextView, Button. Научилась работать с ресурсами (строки, цвета, размеры) и обрабатывать нажатия кнопок.
+**Преимущества применения DIP:**
+* **Снижение связанности.** ViewModel не привязана к конкретным технологиям доступа к данным.
+* **Лёгкость замены реализаций.** Можно создать другую реализацию репозитория (например, для тестирования — `TestUserRepository`) без изменения ViewModel.
+* **Расширяемость.** Добавление новых источников данных не затрагивает модули верхнего уровня.
+* **Улучшенная тестируемость.** В тестах ViewModel можно внедрить мок‑репозиторий, имитирующий разные сценарии (успех, ошибка, задержка).
+
+---
+
+## Вывод
+
+В ходе работы успешно выполнен рефакторинг приложения с внедрением архитектурного паттерна **Repository**. Цель — выделить слой доступа к данным и отделить его от бизнес‑логики — достигнута.
+
+**Что дало добавление слоя Repository:**
+
+* **Разделение ответственности.** ViewModel теперь отвечает исключительно за состояние UI, а работа с данными вынесена в репозиторий. Это соответствует принципу единственной ответственности (SRP).
+* **Гибкость архитектуры.** Реализована возможность динамически переключать источники данных прямо в работающем приложении: между локальной БД (Room) и in‑memory‑хранилищем (`InMemoryTaskRepository`).
+* **Упрощение тестирования.** Благодаря интерфейсу `TaskRepository` можно легко подменять реализации в тестах — например, использовать мок‑репозиторий вместо реального.
+* **Снижение связанности.** ViewModel зависит только от абстракции (`TaskRepository`), а не от конкретных реализаций (DAO или in‑memory). Это реализует принцип инверсии зависимостей (DIP).
+* **Унификация API.** Все операции с задачами (добавление, удаление, обновление и т. д.) доступны через единый интерфейс репозитория, независимо от источника данных.
+* **Поддержка асинхронности.** Использование `suspend`-функций и `Flow` обеспечивает неблокирующую работу с данными и автоматическое обновление UI при изменении данных.
+
+**Перспективы, которые открывает внедрение Repository:**
+
+* **Добавление сетевых источников данных.** Легко интегрировать API‑запросы (например, через Retrofit): логика загрузки и синхронизации с сервером будет локализована в новой реализации репозитория.
+* **Реализация стратегий кэширования.** Можно добавить комбинированные стратегии («сначала кэш, потом сеть», «только сеть» и т. д.) без изменений в ViewModel.
+* **Расширение сценариев тестирования.** Возможность создавать специализированные тестовые реализации репозитория для проверки крайних случаев: медленные ответы, сетевые ошибки, пустые данные и т. п.
+* **Масштабирование приложения.** При добавлении новых экранов и ViewModel они могут переиспользовать тот же интерфейс репозитория, что снижает дублирование кода.
+* **Оптимизация производительности.** В будущих версиях можно внедрить фоновые задачи синхронизации, пакетные операции с данными или локальное кэширование без влияния на UI‑слой.
+* **Поддержка офлайн‑режима.** С текущей архитектурой проще реализовать сохранение операций в очередь при отсутствии сети и их последующую синхронизацию.
+
+Таким образом, внедрение слоя Repository существенно повысило гибкость, тестируемость и поддерживаемость кода, создав прочную основу для дальнейшего развития приложения.
